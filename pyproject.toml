@@ -1,0 +1,28 @@
+[project]
+name = "CMBforecasts-abbe"
+version = "0.1.0"
+description = "Using modified GoFish code that has been adapted for CMB forecasts"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+	"matplotlib>=3.10.0",
+   	"numpy<=3.0.0",
+	"scipy>=1.15.2",
+	"camb>=1.5.9",
+	"configobj>=5.0.9",
+	"pandas>=2.2.3",
+	"findiff>=0.12.1",
+	"pydantic>=2.10.6",
+    	"pydantic-settings>=2.8.1",
+    	"rich>=13.9.4",
+	"loguru>=0.7.3",
+	"typing",
+	"chainconsumer"
+	#"quadpy"
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.1.0",
+    "ruff>=0.11.0",
+]
