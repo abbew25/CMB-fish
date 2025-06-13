@@ -17,12 +17,21 @@ class CosmoResults:
             self.theta_star, 
             self.A_phi,
             self.log10Geff,
+            area
 
         ) = self.run_camb(pardict)
         
+        pardictbefore = pardict.copy() 
+        pardictafter = pardict.copy() 
+        pardictbefore['thetastar'] = self.theta_star* 0.95 
+        pardictbefore.popitem('h')
+        pardictafter['thetastar'] = self.theta_star * 1.05  
+        pardictafter.popitem('h')
+        
+        self.clTT_before = self.run_camb(pardictbefore)[1] 
+        self.clTT_after = self.run_camb(pardictafter)[1] 
 
-
-    def run_camb(self, pardict: ConfigObj, zlow: npt.NDArray, zhigh: npt.NDArray):
+    def run_camb(self, pardict: ConfigObj):
         """Runs an instance of CAMB given the cosmological parameters in pardict and redshift bins
 
         Parameters
@@ -132,6 +141,7 @@ class CosmoResults:
             theta_star,
             A_phi,
             log10Geff,
+            area
             
         )
 
