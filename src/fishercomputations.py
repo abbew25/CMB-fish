@@ -11,11 +11,11 @@ def Set_Bait(
     cosmo: CosmoResults,
     geff_fixed: bool = True,
 ):
-    derPthetastar = compute_deriv_thetastar(cosmo)
-    derPbetaphi = compute_deriv_betaphiamplitude(cosmo)
+    derClthetastar = compute_deriv_thetastar(cosmo)
+    derClAphi = compute_deriv_phiamplitude(cosmo)
 
     if geff_fixed:
-        return derPbetaphi, derPthetastar
+        return derClAphi, derClthetastar
     elif not geff_fixed:
         return None
 
@@ -23,14 +23,14 @@ def Set_Bait(
 def compute_deriv_thetastar(cosmo: CosmoResults):
     cl_before = splev(cosmo.ell, cosmo.clTT_minthetastar)
     cl_after = splev(cosmo.ell, cosmo.clTT_plusthetastar)
-    deltathetastar = 0.05 * cosmo.theta_star
+    deltathetastar = 0.005 * cosmo.theta_star
     derCl_thetastar = (cl_before - cl_after) / (2.0 * deltathetastar / 100.0)
     derCl_thetastar_interp = interp1d(cosmo.ell, derCl_thetastar)
     return derCl_thetastar_interp
 
 
-def compute_deriv_betaphiamplitude(cosmo: CosmoResults):
-    dl = 0.001
+def compute_deriv_phiamplitude(cosmo: CosmoResults):
+    dl = 0.01
     clTT = splev(cosmo.ell, cosmo.clTT)
     derCl = FinDiff(0, dl, acc=4)(clTT)
     order = 4
@@ -39,7 +39,9 @@ def compute_deriv_betaphiamplitude(cosmo: CosmoResults):
         linterp = cosmo.ell + i * dl
         Clarray[i + order] = splev(linterp, cosmo.clTT)
     derCl = FinDiff(0, dl, acc=4)(Clarray)[order]
-    dl_dA = fitting_formula_Montefalcone2025(cosmo.ell) / cosmo.theta_star / 100.0
+    dl_dA = (
+        -1.0 * fitting_formula_Montefalcone2025(cosmo.ell) / cosmo.theta_star * 100.0
+    )
 
     derCl_A = derCl * dl_dA
     derCl_A = interp1d(cosmo.ell, derCl_A)

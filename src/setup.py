@@ -23,9 +23,9 @@ class CosmoResults:
 
         pardictbefore = pardict.copy()
         pardictafter = pardict.copy()
-        pardictbefore["thetastar"] = self.theta_star * 0.975 / 100.0
+        pardictbefore["thetastar"] = self.theta_star * 0.995 / 100.0
         del pardictbefore["h"]
-        pardictafter["thetastar"] = self.theta_star * 1.025 / 100.0
+        pardictafter["thetastar"] = self.theta_star * 1.005 / 100.0
         del pardictafter["h"]
 
         self.minus_thstar = self.run_camb(pardictbefore)
@@ -126,7 +126,7 @@ class CosmoResults:
         #     - fitting_formula_Baumann19(kin)
         # ) / theta_star
 
-        ellshift = A_phi * (1.0 - fitting_formula_Montefalcone2025(ll)) / theta_star
+        ellshift = A_phi * (1.0 - fitting_formula_Montefalcone2025(ll))  # / theta_star
 
         clTT = splrep(ll + ellshift, clTT)
 

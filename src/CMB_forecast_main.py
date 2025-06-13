@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     if not pardict.as_bool("geff_fixed"):
         txt = f" {0:.2f}    {0:.2f}     {0:.2f}       {0:.2f}         {0:.2f}       {0:.2f} ".format(
-            means[0],
+            means[0] / 100.0,
             errs[0] / means[0],
             means[1],
             errs[1] / means[1] * 100.0,
