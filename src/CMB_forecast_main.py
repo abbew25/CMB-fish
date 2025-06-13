@@ -1,13 +1,12 @@
 import sys
 import numpy as np
 from configobj import ConfigObj
-from src.fishercomputations import (
+from fishercomputations import (
     Set_Bait,
     Fish,
 )
-from src.setup import CosmoResults, InputData, write_fisher
+from setup import CosmoResults, write_fisher
 from rich.console import Console
-from loguru import logger
 
 
 if __name__ == "__main__":
@@ -33,29 +32,25 @@ if __name__ == "__main__":
         cosmo,
         geff_fixed=pardict.as_bool("geff_fixed"),
     )
+    derClthetastar = derivatives[0]
+    derClA = derivatives[1]
+
+    derClgeff = None
     if not pardict.as_bool("geff_fixed"):
         derClgeff = derivatives[2]
-        derClthetastar = derivatives[0]
-        derClA = derivatives[1]
-    
+
     console.log(
         "Computed derivatives of the power spectrum w.r.t. forecast parameters."
     )
-    
 
     # Loop over redshifts and compute the Fisher matrix and output the 3x3 matrix
-    FullCatch = np.zeros(
-        (3, 3)
-    )
-    
+    FullCatch = np.zeros((3, 3))
+
     if pardict.as_bool("geff_fixed"):
-        
         FullCatch = np.zeros((2, 2))
-        
-        console.log(
-            "#  theta_star  theta_star_err(%)  A(Neff)  A(Neff)_err(%)"
-        )
-        
+
+        console.log("#  theta_star  theta_star_err(%)  A(Neff)  A(Neff)_err(%)")
+
     else:
         console.log(
             "#  theta_star  theta_star_err(%)  A(Neff)  A(Neff)_err(%)  log10Geff  geff_err(%)"
@@ -73,32 +68,24 @@ if __name__ == "__main__":
 
     cov = np.linalg.inv(Catch)
     errs = np.sqrt(np.diag(cov))
-    means = np.array([cosmo.theta_star, cosmo.A_phi, cosmo.log10Geff])        
-    if not pardict.as_bool("geff_fixed"):
-        means = np.array([cosmo.theta_star, cosmo.A_phi]) 
-            
-    if not pardict.as_bool("geff_fixed"):
-        txt = " {0:.2f}    {0:.2f}     {0:.2f}       {0:.2f}         {0:.2f}       {0:.2f} }".format(
+    means = np.array([cosmo.theta_star, cosmo.A_phi, cosmo.log10Geff])
+    if pardict.as_bool("geff_fixed"):
+        means = np.array([cosmo.theta_star, cosmo.A_phi])
 
-                    means[0],
-                    errs[0],
-                    means[1],
-                    errs[1],
-                    means[2],
-                    errs[2],
+    if not pardict.as_bool("geff_fixed"):
+        txt = f" {0:.2f}    {0:.2f}     {0:.2f}       {0:.2f}         {0:.2f}       {0:.2f} ".format(
+            means[0],
+            errs[0] / means[0],
+            means[1],
+            errs[1] / means[1] * 100.0,
+            means[2],
+            errs[2] / means[2] * 100.0,
         )
-    else: 
-        txt = " {0:.2f}    {0:.2f}     {0:.2f}       {0:.2f} ".format(
-                    means[0],
-                    errs[0],
-                    means[1],
-                    errs[1],
+    else:
+        txt = f" {0:.2f}    {0:.2f}     {0:.2f}       {0:.2f} ".format(
+            means[0],
         )
-    
-    if not pardict.as_bool("geff_fixed"): 
-        
-        txt = txt + "       {0:.2f}".format(errs[3])
-    
+
     console.log(txt)
 
     # Output the fisher matrix for the redshift bin
@@ -128,7 +115,7 @@ if __name__ == "__main__":
         c.plotter.plot()
         plt.show()
 
-    else: 
+    else:
         # plot the contour for beta_phi and alpha_iso
         from chainconsumer import ChainConsumer, Chain
         import matplotlib.pyplot as plt

@@ -1,59 +1,45 @@
 import numpy as np
 from findiff import FinDiff
 from scipy.integrate import simpson as simps
-from scipy.interpolate import splrep, splev
-from loguru import logger
-from src.setup import (
-    CosmoResults,
-    InputData,
-    #derivk_geff,
-    #fitting_formula_interactingneutrinos,
-    fitting_formula_Montefalcone2025
-)
+from scipy.interpolate import splev
+from setup import CosmoResults, fitting_formula_Montefalcone2025
 import numpy.typing as npt
 from scipy.interpolate import interp1d
-
-from itertools import combinations_with_replacement
 
 
 def Set_Bait(
     cosmo: CosmoResults,
     geff_fixed: bool = True,
 ):
-
     derPthetastar = compute_deriv_thetastar(cosmo)
     derPbetaphi = compute_deriv_betaphiamplitude(cosmo)
 
-    if geff_fixed: 
+    if geff_fixed:
         return derPbetaphi, derPthetastar
     elif not geff_fixed:
-        return None 
-    
+        return None
+
 
 def compute_deriv_thetastar(cosmo: CosmoResults):
-   
-    cl_before = cosmo.clTT_before 
-    cl_after = cosmo.clTT_after
-    deltathetastar = 0.05 * cosmo.theta_star 
-    derCl_thetastar = (cl_before - cl_after) / (2.0 * deltathetastar / 100.0) 
+    cl_before = splev(cosmo.ell, cosmo.clTT_minthetastar)
+    cl_after = splev(cosmo.ell, cosmo.clTT_plusthetastar)
+    deltathetastar = 0.05 * cosmo.theta_star
+    derCl_thetastar = (cl_before - cl_after) / (2.0 * deltathetastar / 100.0)
     derCl_thetastar_interp = interp1d(cosmo.ell, derCl_thetastar)
     return derCl_thetastar_interp
 
 
 def compute_deriv_betaphiamplitude(cosmo: CosmoResults):
- 
     dl = 0.001
-    derCl = FinDiff(0, dl, acc=4)(cosmo.clTT)
-    order = 4 
+    clTT = splev(cosmo.ell, cosmo.clTT)
+    derCl = FinDiff(0, dl, acc=4)(clTT)
+    order = 4
     Clarray = np.empty((2 * order + 1, len(cosmo.ell)))
     for i in range(-order, order + 1):
-        linterp = cosmo.k + i * dl
-        Clarray[i + order] = splev(linterp, cosmo.clTT) 
+        linterp = cosmo.ell + i * dl
+        Clarray[i + order] = splev(linterp, cosmo.clTT)
     derCl = FinDiff(0, dl, acc=4)(Clarray)[order]
-    dl_dA = (
-        fitting_formula_Montefalcone2025(cosmo.ell)
-        / cosmo.theta_star / 100.0
-    ) 
+    dl_dA = fitting_formula_Montefalcone2025(cosmo.ell) / cosmo.theta_star / 100.0
 
     derCl_A = derCl * dl_dA
     derCl_A = interp1d(cosmo.ell, derCl_A)
@@ -100,13 +86,13 @@ def Fish(
     Parameters
     ----------
     cosmo: CosmoResults object
-        An instance of the CosmoResults class. 
+        An instance of the CosmoResults class.
     data: InputData object
-        An instance of the InputData class. 
+        An instance of the InputData class.
     Returns
     -------
     ManyFish: np.ndarray
-        
+
     """
     # Uses Simpson's rule or adaptive quadrature to integrate over all k and mu.
     # mu and k values for Simpson's rule
@@ -114,15 +100,16 @@ def Fish(
 
     # 2D integration
     ManyFish = simps(
-            CastNet(
-                lvec,
-                cosmo,
-                derClthetastar,
-                derClbeta,
-                derClgeff,
-                geff_fixed,
-            ),
-        x=lvec, axis=2
+        CastNet(
+            lvec,
+            cosmo,
+            derClthetastar,
+            derClbeta,
+            derClgeff,
+            geff_fixed,
+        ),
+        x=lvec,
+        axis=2,
     )
 
     return ManyFish
@@ -133,7 +120,7 @@ def CastNet(
     cosmo: CosmoResults,
     derClthetastar: interp1d,
     derClA: interp1d,
-    derClgeff: interp1d, 
+    derClgeff: interp1d,
     geff_fixed: bool = True,
 ):
     """Compute the Fisher matrix for a vector of ll.
@@ -154,7 +141,7 @@ def CastNet(
     Returns
     -------
     Shoal: np.ndarray
-        An array containing the Fisher information for each parameter of interest. 
+        An array containing the Fisher information for each parameter of interest.
     """
 
     Shoal = np.empty((3, 3, len(ll)))
@@ -167,23 +154,26 @@ def CastNet(
 
     # Loop over each k and mu value and compute the Fisher information for the cosmological parameters
     for i, lval in enumerate(ll):
-        
-        derCl = [derClthetastarval[i], derClAval[i]]
+        derCl = np.array([derClthetastarval[i], derClAval[i]])
         if not geff_fixed:
             derCl.append(derClgeffval[i])
 
         covCl, covCl_inv = compute_inv_cov(
-            cosmo.Cl[i], lval, 
+            splev(lval, cosmo.clTT),
+            lval,
         )
 
-        Shoal[:, :, i] = (2.0 * lval + 1.0)* cosmo.area/(4.0*np.pi) * np.outer(derCl * covCl_inv, derCl) 
+        Shoal[:, :, i] = (
+            (2.0 * lval + 1.0)
+            * cosmo.area
+            / (4.0 * np.pi)
+            * np.outer(derCl * covCl_inv, derCl)
+        )
 
     return Shoal
 
 
-def compute_inv_cov(
-    cosmoClval: float, lval: float
-):
+def compute_inv_cov(cosmoClval: float, lval: float):
     """Computes the covariance matrix of the auto and cross-power spectra for a given
         ell, as well as its inverse.
 
@@ -192,11 +182,13 @@ def compute_inv_cov(
     covariance: np.ndarray
     cov_inv: np.ndarray
     """
-    
-    deltab = np.array([33, 23, 14, 10, 7, 5, 5])
-    deltaT = np.array([145, 149, 137, 65, 43, 66, 200]) 
-    Nl_freq = deltaT**2 * np.exp(lval * (lval + 1.0)* deltab**2 /(8.0*np.log(2.0)))
-    Nl_DeltaT = 1.0/np.sum( 1.0/ Nl_freq)  # 1/Nl_freq is the variance of the noise in the power spectrum
+
+    deltab = np.array([33, 23, 14, 10, 7, 5, 5]) / 3437.75
+    deltaT = np.array([145, 149, 137, 65, 43, 66, 200]) * 1.0e6 / 3437.75
+    Nl_freq = deltaT**2 * np.exp(lval * (lval + 1.0) * deltab**2 / (8.0 * np.log(2.0)))
+    Nl_DeltaT = 1.0 / np.sum(
+        1.0 / Nl_freq
+    )  # 1/Nl_freq is the variance of the noise in the power spectrum
     # if not geff_fixed:
     #     covariance = np.empty((3, 3))
     # Loop over power spectra of different samples P_12
@@ -217,12 +209,10 @@ def compute_inv_cov(
     #         if n2 == n4:
     #             pk24 += 1.0 / nbar[n2]
     #         covariance[ps1, ps2] = pk13 * pk24 + pk14 * pk23
-    
-    
-    
-    covariance = 2.0 * (Nl_DeltaT + cosmoClval)**2 
 
-    cov_inv = 1.0/covariance 
+    covariance = 2.0 * (Nl_DeltaT + cosmoClval) ** 2
+
+    cov_inv = 1.0 / covariance
 
     return covariance, cov_inv
 
@@ -253,7 +243,6 @@ def compute_inv_cov(
 #                 new_obj = np.delete(new_obj, a, 1)
 
 #     return new_obj
-
 
 
 # def compute_full_deriv(
@@ -402,5 +391,3 @@ def compute_inv_cov(
 #         ]
 
 #     return derP
-
-

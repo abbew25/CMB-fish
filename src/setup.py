@@ -6,7 +6,8 @@ from configobj import ConfigObj
 
 class InputData:
     def __init__(self, pardict: ConfigObj):
-        return None 
+        return None
+
 
 # This class contains everything we might need to set up to compute the fisher matrix
 class CosmoResults:
@@ -14,22 +15,24 @@ class CosmoResults:
         (
             self.ell,
             self.clTT,
-            self.theta_star, 
+            self.theta_star,
             self.A_phi,
             self.log10Geff,
-            area
-
+            self.area,
         ) = self.run_camb(pardict)
-        
-        pardictbefore = pardict.copy() 
-        pardictafter = pardict.copy() 
-        pardictbefore['thetastar'] = self.theta_star* 0.95 
-        pardictbefore.popitem('h')
-        pardictafter['thetastar'] = self.theta_star * 1.05  
-        pardictafter.popitem('h')
-        
-        self.clTT_before = self.run_camb(pardictbefore)[1] 
-        self.clTT_after = self.run_camb(pardictafter)[1] 
+
+        pardictbefore = pardict.copy()
+        pardictafter = pardict.copy()
+        pardictbefore["thetastar"] = self.theta_star * 0.975 / 100.0
+        del pardictbefore["h"]
+        pardictafter["thetastar"] = self.theta_star * 1.025 / 100.0
+        del pardictafter["h"]
+
+        self.minus_thstar = self.run_camb(pardictbefore)
+        self.clTT_minthetastar = self.minus_thstar[1]
+
+        self.plus_thstar = self.run_camb(pardictafter)
+        self.clTT_plusthetastar = self.plus_thstar[1]
 
     def run_camb(self, pardict: ConfigObj):
         """Runs an instance of CAMB given the cosmological parameters in pardict and redshift bins
@@ -94,33 +97,26 @@ class CosmoResults:
             nnu=float(parlinear["Neff"]),
         )
         pars.NonLinear = camb.model.NonLinear_none
-
+        pars.set_for_lmax(3000)
         # Run CAMB
         results = camb.get_results(pars)
 
         # Get the power spectrum
-        kin, zin, pklin = results.get_matter_power_spectrum(
-            minkh=2.0e-5, maxkh=10.0, npoints=2000
-        )
-        
-        ll = np.arange(1, 3000)
-        CMBdat = results.get_total_cls(
-            CMB_unit="muK", lmax=3000, raw_cl=True)
-        clTT, clTE, clEE, clBB = (
-            CMBdat[:, 0],
-            CMBdat[:, 1],
-            CMBdat[:, 2],
-            CMBdat[:, 3],
-        )
+        # kin, zin, pklin = results.get_matter_power_spectrum(
+        #     minkh=2.0e-5, maxkh=10.0, npoints=2000
+        # )
+
+        ll = np.arange(2, 3001)
+
+        CMBdat = results.get_cmb_power_spectra(pars, CMB_unit="muK", lmax=3000)["total"]
+
+        clTT = np.array(CMBdat[:, 0][2:])
 
         # Get some derived quantities
         area = float(pardict["skyarea"]) * (np.pi / 180.0) ** 2
-        theta_star = results.get_derived_params()["theta_s"]
-        
-        
-        A_phi = (
-            pardict.as_float("A_phi") if "A_phi" in parlinear.keys() else 1.0
-        )
+        theta_star = results.get_derived_params()["thetastar"]
+
+        A_phi = pardict.as_float("A_phi") if "A_phi" in parlinear.keys() else 1.0
         log10Geff = (
             pardict.as_float("log10Geff") if "log10Geff" in pardict.keys() else -np.inf
         )
@@ -129,39 +125,26 @@ class CosmoResults:
         #     A_phi * fitting_formula_interactingneutrinos(kin, log10Geff, theta_star)
         #     - fitting_formula_Baumann19(kin)
         # ) / theta_star
-        
-        ellshift = A_phi * (1.0- fitting_formula_Montefalcone2025(ll)) / theta_star
-        
+
+        ellshift = A_phi * (1.0 - fitting_formula_Montefalcone2025(ll)) / theta_star
+
         clTT = splrep(ll + ellshift, clTT)
 
-        return (
-            
-            ll,
-            clTT,
-            theta_star,
-            A_phi,
-            log10Geff,
-            area
-            
-        )
+        return ll, clTT, theta_star, A_phi, log10Geff, area
 
-   
+
 def write_fisher(
     pardict: ConfigObj,
     cov_inv: npt.NDArray,
     parameter_means: list,
 ) -> None:
     """
-    Write Fisher predictions to text files  
-    
+    Write Fisher predictions to text files
+
     """
 
-    cov_filename = (
-        pardict["outputfile"] + "_cov.txt"
-    )
-    data_filename = (
-        pardict["outputfile"] + "_dat.txt"
-    )
+    cov_filename = pardict["outputfile"] + "_cov.txt"
+    data_filename = pardict["outputfile"] + "_dat.txt"
 
     np.savetxt(cov_filename, cov_inv)
     np.savetxt(data_filename, parameter_means)
@@ -171,10 +154,9 @@ def fitting_formula_Montefalcone2025(ll: npt.NDArray) -> npt.NDArray:
     """Compute the fitting formula for the power spectrum phase shift (for standard model neutrinos) based on Montefalcone et. al., 2025"""
     ell_inf = 11.0
     ell_star = 483.0
-    eps = -1.69 
-    
-    return (ell_inf/(1.0 + (ll/ell_star)**eps))
+    eps = -1.69
 
+    return ell_inf / (1.0 + (ll / ell_star) ** eps)
 
 
 # def amplitude_modulation_geff(
