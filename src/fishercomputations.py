@@ -18,8 +18,6 @@ from itertools import combinations_with_replacement
 
 def Set_Bait(
     cosmo: CosmoResults,
-    data: InputData,
-    A_phi_fixed: bool = True,
     geff_fixed: bool = True,
 ):
 
@@ -91,7 +89,6 @@ def Fish(
     cosmo: CosmoResults,
     lmin: float,
     lmax: float,
-    data: InputData,
     derClthetastar: interp1d,
     derClbeta: interp1d,
     derClgeff: interp1d,
@@ -119,7 +116,6 @@ def Fish(
     ManyFish = simps(
             CastNet(
                 lvec,
-                data,
                 cosmo,
                 derClthetastar,
                 derClbeta,
@@ -134,7 +130,6 @@ def Fish(
 
 def CastNet(
     ll: npt.NDArray,
-    data: InputData,
     cosmo: CosmoResults,
     derClthetastar: interp1d,
     derClA: interp1d,
@@ -178,7 +173,7 @@ def CastNet(
             derCl.append(derClgeffval[i])
 
         covCl, covCl_inv = compute_inv_cov(
-            cosmo.Cl[i], lval, geff_fixed, 
+            cosmo.Cl[i], lval, 
         )
 
         Shoal[:, :, i] = (2.0 * lval + 1.0)* cosmo.area/(4.0*np.pi) * np.outer(derCl * covCl_inv, derCl) 
@@ -187,7 +182,7 @@ def CastNet(
 
 
 def compute_inv_cov(
-    cosmoClval: float, lval: float, geff_fixed: bool = True
+    cosmoClval: float, lval: float
 ):
     """Computes the covariance matrix of the auto and cross-power spectra for a given
         ell, as well as its inverse.
@@ -232,32 +227,32 @@ def compute_inv_cov(
     return covariance, cov_inv
 
 
-def shrink_sqr_matrix(sqr_matrix_obj: npt.NDArray, flags: npt.NDArray = np.array([])):
-    """
-    Function that removed the rows and columns of a square matrix (numpy matrix) if the rows
-    and columns that a diagonal element of the matrix coincides with is zero.
-    e.g. 1 2 3 4
-         2 1 9 0   ----- >     1 2 4
-         4 5 0 9               2 1 0
-         4 3 2 1               4 3 1
+# def shrink_sqr_matrix(sqr_matrix_obj: npt.NDArray, flags: npt.NDArray = np.array([])):
+#     """
+#     Function that removed the rows and columns of a square matrix (numpy matrix) if the rows
+#     and columns that a diagonal element of the matrix coincides with is zero.
+#     e.g. 1 2 3 4
+#          2 1 9 0   ----- >     1 2 4
+#          4 5 0 9               2 1 0
+#          4 3 2 1               4 3 1
 
-    The third row and column has been removed since M_(2, 2) <= 1e-7
-    """
-    a = 0
-    new_obj = sqr_matrix_obj.copy()
+#     The third row and column has been removed since M_(2, 2) <= 1e-7
+#     """
+#     a = 0
+#     new_obj = sqr_matrix_obj.copy()
 
-    if len(flags) >= 1:
-        new_obj = np.delete(new_obj, flags, 0)
-        new_obj = np.delete(new_obj, flags, 1)
+#     if len(flags) >= 1:
+#         new_obj = np.delete(new_obj, flags, 0)
+#         new_obj = np.delete(new_obj, flags, 1)
 
-    else:
-        for i in (np.arange(sqr_matrix_obj.shape[0]))[::-1]:
-            if abs(sqr_matrix_obj[i][i]) <= 1e-13:
-                a = i
-                new_obj = np.delete(new_obj, a, 0)
-                new_obj = np.delete(new_obj, a, 1)
+#     else:
+#         for i in (np.arange(sqr_matrix_obj.shape[0]))[::-1]:
+#             if abs(sqr_matrix_obj[i][i]) <= 1e-13:
+#                 a = i
+#                 new_obj = np.delete(new_obj, a, 0)
+#                 new_obj = np.delete(new_obj, a, 1)
 
-    return new_obj
+#     return new_obj
 
 
 

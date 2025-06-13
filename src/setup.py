@@ -150,8 +150,6 @@ def write_fisher(
     pardict: ConfigObj,
     cov_inv: npt.NDArray,
     parameter_means: list,
-    A_phi_fixed: bool,
-    geff_fixed: bool,
 ) -> None:
     """
     Write Fisher predictions to text files  
