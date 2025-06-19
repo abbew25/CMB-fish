@@ -4,18 +4,27 @@ import numpy.typing as npt
 from configobj import ConfigObj
 
 
-class InputData:
-    def __init__(self, pardict: ConfigObj):
-        return None
-
-
 # This class contains everything we might need to set up to compute the fisher matrix
 class CosmoResults:
-    def __init__(self, pardict: ConfigObj):
+    def __init__(
+        self,
+        pardict: ConfigObj,
+        fracstepthetastar: float = 0.002,
+        fracstepomegab: float = 0.002,
+        fracstepomegacdm: float = 0.002,
+        fracstepAs: float = 0.002,
+        fracstepns: float = 0.002,
+        fracsteptau: float = 0.002,
+    ):
         (
             self.ell,
             self.clTT,
             self.theta_star,
+            self.Omegab,
+            self.Omega_cdm,
+            self.lnAs10,
+            self.ns,
+            self.tau,
             self.A_phi,
             self.log10Geff,
             self.area,
@@ -23,9 +32,9 @@ class CosmoResults:
 
         pardictbefore = pardict.copy()
         pardictafter = pardict.copy()
-        pardictbefore["thetastar"] = self.theta_star * 0.995 / 100.0
+        pardictbefore["thetastar"] = self.theta_star * (1.0 - fracstepthetastar) / 100.0
         del pardictbefore["h"]
-        pardictafter["thetastar"] = self.theta_star * 1.005 / 100.0
+        pardictafter["thetastar"] = self.theta_star * (1.0 + fracstepthetastar) / 100.0
         del pardictafter["h"]
 
         self.minus_thstar = self.run_camb(pardictbefore)
@@ -33,6 +42,53 @@ class CosmoResults:
 
         self.plus_thstar = self.run_camb(pardictafter)
         self.clTT_plusthetastar = self.plus_thstar[1]
+
+        pardictbefore = pardict.copy()
+        pardictafter = pardict.copy()
+        pardictbefore["omega_b"] = self.Omegab * (1.0 - fracstepomegab)
+        pardictafter["omega_b"] = self.Omegab * (1.0 + fracstepomegab)
+
+        self.minus_Omegab = self.run_camb(pardictbefore)
+        self.clTT_minOmegab = self.minus_Omegab[1]
+        self.plus_Omegab = self.run_camb(pardictafter)
+        self.clTT_plusOmegab = self.plus_Omegab[1]
+
+        pardictbefore = pardict.copy()
+        pardictafter = pardict.copy()
+        pardictbefore["omega_cdm"] = self.Omega_cdm * (1.0 - fracstepomegacdm)
+        pardictafter["omega_cdm"] = self.Omega_cdm * (1.0 + fracstepomegacdm)
+
+        self.minus_Omegacdm = self.run_camb(pardictbefore)
+        self.clTT_minOmegacdm = self.minus_Omegacdm[1]
+        self.plus_Omegacdm = self.run_camb(pardictafter)
+        self.clTT_plusOmegacdm = self.plus_Omegacdm[1]
+
+        pardictbefore = pardict.copy()
+        pardictafter = pardict.copy()
+        pardictbefore["A_s"] = np.exp(self.lnAs10 * (1.0 - fracstepAs)) * 1.0e-10
+        pardictafter["A_s"] = np.exp(self.lnAs10 * (1.0 + fracstepAs)) * 1.0e-10
+        self.minus_As = self.run_camb(pardictbefore)
+        self.clTT_minAs = self.minus_As[1]
+        self.plus_As = self.run_camb(pardictafter)
+        self.clTT_plusAs = self.plus_As[1]
+
+        pardictbefore = pardict.copy()
+        pardictafter = pardict.copy()
+        pardictbefore["n_s"] = self.ns * (1.0 - fracstepns)
+        pardictafter["n_s"] = self.ns * (1.0 + fracstepns)
+        self.minus_ns = self.run_camb(pardictbefore)
+        self.clTT_minns = self.minus_ns[1]
+        self.plus_ns = self.run_camb(pardictafter)
+        self.clTT_plusns = self.plus_ns[1]
+
+        pardictbefore = pardict.copy()
+        pardictafter = pardict.copy()
+        pardictbefore["tau_reio"] = float(pardict["tau_reio"]) * (1.0 - fracsteptau)
+        pardictafter["tau_reio"] = float(pardict["tau_reio"]) * (1.0 + fracsteptau)
+        self.minus_tau = self.run_camb(pardictbefore)
+        self.clTT_mintau = self.minus_tau[1]
+        self.plus_tau = self.run_camb(pardictafter)
+        self.clTT_plustau = self.plus_tau[1]
 
     def run_camb(self, pardict: ConfigObj):
         """Runs an instance of CAMB given the cosmological parameters in pardict and redshift bins
@@ -108,13 +164,20 @@ class CosmoResults:
 
         ll = np.arange(2, 3001)
 
-        CMBdat = results.get_cmb_power_spectra(pars, CMB_unit="muK", lmax=3000)["total"]
+        CMBdat = results.get_cmb_power_spectra(
+            pars, CMB_unit="muK", lmax=3000, raw_cl=True
+        )["total"]
 
-        clTT = np.array(CMBdat[:, 0][2:])
+        clTT = np.array(CMBdat[:, 0][2:])  # *1.0e12
 
         # Get some derived quantities
         area = float(pardict["skyarea"]) * (np.pi / 180.0) ** 2
         theta_star = results.get_derived_params()["thetastar"]
+        Omegab = float(parlinear["omega_b"])
+        Omegacdm = float(parlinear["omega_cdm"])
+        lnAs10 = np.log10(float(parlinear["A_s"]) * 1.0e10)
+        ns = float(parlinear["n_s"])
+        tau = float(parlinear["tau_reio"])
 
         A_phi = pardict.as_float("A_phi") if "A_phi" in parlinear.keys() else 1.0
         log10Geff = (
@@ -126,11 +189,23 @@ class CosmoResults:
         #     - fitting_formula_Baumann19(kin)
         # ) / theta_star
 
-        ellshift = A_phi * (1.0 - fitting_formula_Montefalcone2025(ll))  # / theta_star
+        ellshift = (A_phi - 1.0) * fitting_formula_Montefalcone2025(ll)  # / theta_star
 
         clTT = splrep(ll + ellshift, clTT)
 
-        return ll, clTT, theta_star, A_phi, log10Geff, area
+        return (
+            ll,
+            clTT,
+            theta_star,
+            Omegab,
+            Omegacdm,
+            lnAs10,
+            ns,
+            tau,
+            A_phi,
+            log10Geff,
+            area,
+        )
 
 
 def write_fisher(

@@ -10,23 +10,87 @@ from scipy.interpolate import interp1d
 def Set_Bait(
     cosmo: CosmoResults,
     geff_fixed: bool = True,
+    fracstepthetastar: float = 0.002,
+    fracstepomegab: float = 0.002,
+    fracstepomegacdm: float = 0.002,
+    fracstepAs: float = 0.002,
+    fracstepns: float = 0.002,
+    fracsteptau: float = 0.002,
 ):
-    derClthetastar = compute_deriv_thetastar(cosmo)
+    derClthetastar = compute_deriv_thetastar(cosmo, fracstep=fracstepthetastar)
     derClAphi = compute_deriv_phiamplitude(cosmo)
+    derClOmegab = compute_deriv_omegab(cosmo, fracstep=fracstepomegab)
+    derClOmegacdm = compute_deriv_omegacdm(cosmo, fracstep=fracstepomegacdm)
+    derClAs = compute_deriv_As(cosmo, fracstep=fracstepAs)
+    derClns = compute_deriv_ns(cosmo, fracstep=fracstepns)
+    derCltau = compute_deriv_tau(cosmo, fracstep=fracsteptau)
 
     if geff_fixed:
-        return derClAphi, derClthetastar
+        return (
+            derClAphi,
+            derClthetastar,
+            derClOmegab,
+            derClOmegacdm,
+            derClAs,
+            derClns,
+            derCltau,
+        )
     elif not geff_fixed:
         return None
 
 
-def compute_deriv_thetastar(cosmo: CosmoResults):
+def compute_deriv_thetastar(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_before = splev(cosmo.ell, cosmo.clTT_minthetastar)
     cl_after = splev(cosmo.ell, cosmo.clTT_plusthetastar)
-    deltathetastar = 0.005 * cosmo.theta_star
-    derCl_thetastar = (cl_before - cl_after) / (2.0 * deltathetastar / 100.0)
+    deltathetastar = fracstep * cosmo.theta_star
+    derCl_thetastar = (cl_after - cl_before) / (2.0 * deltathetastar)
     derCl_thetastar_interp = interp1d(cosmo.ell, derCl_thetastar)
     return derCl_thetastar_interp
+
+
+def compute_deriv_omegab(cosmo: CosmoResults, fracstep: float = 0.002):
+    cl_before = splev(cosmo.ell, cosmo.clTT_minOmegab)
+    cl_after = splev(cosmo.ell, cosmo.clTT_plusOmegab)
+    deltaomegab = fracstep * cosmo.Omegab
+    derCl_omegab = (cl_after - cl_before) / (2.0 * deltaomegab)
+    derCl_omegab_interp = interp1d(cosmo.ell, derCl_omegab)
+    return derCl_omegab_interp
+
+
+def compute_deriv_omegacdm(cosmo: CosmoResults, fracstep: float = 0.002):
+    cl_before = splev(cosmo.ell, cosmo.clTT_minOmegacdm)
+    cl_after = splev(cosmo.ell, cosmo.clTT_plusOmegacdm)
+    deltaomegacdm = fracstep * cosmo.Omega_cdm
+    derCl_omegacdm = (cl_after - cl_before) / (2.0 * deltaomegacdm)
+    derCl_omegacdm_interp = interp1d(cosmo.ell, derCl_omegacdm)
+    return derCl_omegacdm_interp
+
+
+def compute_deriv_As(cosmo: CosmoResults, fracstep: float = 0.002):
+    cl_before = splev(cosmo.ell, cosmo.clTT_minAs)
+    cl_after = splev(cosmo.ell, cosmo.clTT_plusAs)
+    deltaAs = fracstep * cosmo.lnAs10
+    derCl_As = (cl_after - cl_before) / (2.0 * deltaAs)
+    derCl_As_interp = interp1d(cosmo.ell, derCl_As)
+    return derCl_As_interp
+
+
+def compute_deriv_ns(cosmo: CosmoResults, fracstep: float = 0.002):
+    cl_before = splev(cosmo.ell, cosmo.clTT_minns)
+    cl_after = splev(cosmo.ell, cosmo.clTT_plusns)
+    deltans = fracstep * cosmo.ns
+    derCl_ns = (cl_after - cl_before) / (2.0 * deltans)
+    derCl_ns_interp = interp1d(cosmo.ell, derCl_ns)
+    return derCl_ns_interp
+
+
+def compute_deriv_tau(cosmo: CosmoResults, fracstep: float = 0.002):
+    cl_before = splev(cosmo.ell, cosmo.clTT_mintau)
+    cl_after = splev(cosmo.ell, cosmo.clTT_plustau)
+    deltatau = fracstep * cosmo.tau
+    derCl_tau = (cl_after - cl_before) / (2.0 * deltatau)
+    derCl_tau_interp = interp1d(cosmo.ell, derCl_tau)
+    return derCl_tau_interp
 
 
 def compute_deriv_phiamplitude(cosmo: CosmoResults):
@@ -40,7 +104,8 @@ def compute_deriv_phiamplitude(cosmo: CosmoResults):
         Clarray[i + order] = splev(linterp, cosmo.clTT)
     derCl = FinDiff(0, dl, acc=4)(Clarray)[order]
     dl_dA = (
-        -1.0 * fitting_formula_Montefalcone2025(cosmo.ell) / cosmo.theta_star * 100.0
+        -1.0
+        * fitting_formula_Montefalcone2025(cosmo.ell)  #  / cosmo.theta_star * 100.0
     )
 
     derCl_A = derCl * dl_dA
@@ -79,6 +144,11 @@ def Fish(
     lmax: float,
     derClthetastar: interp1d,
     derClbeta: interp1d,
+    derClOmegab: interp1d,
+    derClOmegacdm: interp1d,
+    derClAs: interp1d,
+    derClns: interp1d,
+    derCltau: interp1d,
     derClgeff: interp1d,
     geff_fixed: bool = True,
 ):
@@ -107,6 +177,11 @@ def Fish(
             cosmo,
             derClthetastar,
             derClbeta,
+            derClOmegab,
+            derClOmegacdm,
+            derClAs,
+            derClns,
+            derCltau,
             derClgeff,
             geff_fixed,
         ),
@@ -122,6 +197,11 @@ def CastNet(
     cosmo: CosmoResults,
     derClthetastar: interp1d,
     derClA: interp1d,
+    derClOmegab: interp1d,
+    derClOmegacdm: interp1d,
+    derClAs: interp1d,
+    derClns: interp1d,
+    derCltau: interp1d,
     derClgeff: interp1d,
     geff_fixed: bool = True,
 ):
@@ -146,17 +226,32 @@ def CastNet(
         An array containing the Fisher information for each parameter of interest.
     """
 
-    Shoal = np.empty((3, 3, len(ll)))
+    Shoal = np.empty((8, 8, len(ll)))
     if geff_fixed:
-        Shoal = np.empty((2, 2, len(ll)))
+        Shoal = np.empty((7, 7, len(ll)))
 
     derClAval = derClA(ll)
     derClgeffval = derClgeff(ll) if not geff_fixed else []
     derClthetastarval = derClthetastar(ll)
+    derClOmegabval = derClOmegab(ll)
+    derClOmegacdmval = derClOmegacdm(ll)
+    derClAsval = derClAs(ll)
+    derClnsval = derClns(ll)
+    derCltauval = derCltau(ll)
 
     # Loop over each k and mu value and compute the Fisher information for the cosmological parameters
     for i, lval in enumerate(ll):
-        derCl = np.array([derClthetastarval[i], derClAval[i]])
+        derCl = np.array(
+            [
+                derClthetastarval[i],
+                derClAval[i],
+                derClOmegabval[i],
+                derClOmegacdmval[i],
+                derClAsval[i],
+                derClnsval[i],
+                derCltauval[i],
+            ]
+        )
         if not geff_fixed:
             derCl.append(derClgeffval[i])
 
@@ -167,6 +262,7 @@ def CastNet(
 
         Shoal[:, :, i] = (
             (2.0 * lval + 1.0)
+            * 0.5
             * cosmo.area
             / (4.0 * np.pi)
             * np.outer(derCl * covCl_inv, derCl)
@@ -186,10 +282,14 @@ def compute_inv_cov(cosmoClval: float, lval: float):
     """
 
     deltab = np.array([33, 23, 14, 10, 7, 5, 5]) / 3437.75
-    deltaT = np.array([145, 149, 137, 65, 43, 66, 200]) * 1.0e6 / 3437.75
-    Nl_freq = deltaT**2 * np.exp(lval * (lval + 1.0) * deltab**2 / (8.0 * np.log(2.0)))
+    deltaT = np.array([145, 149, 137, 65, 43, 66, 200]) / 3437.75
+    Nl_freq = (
+        1.0
+        / (deltaT**2)
+        * np.exp(-1.0 * lval * (lval + 1.0) * deltab**2 / (8.0 * np.log(2.0)))
+    )
     Nl_DeltaT = 1.0 / np.sum(
-        1.0 / Nl_freq
+        Nl_freq
     )  # 1/Nl_freq is the variance of the noise in the power spectrum
     # if not geff_fixed:
     #     covariance = np.empty((3, 3))
