@@ -234,123 +234,132 @@ def fitting_formula_Montefalcone2025(ll: npt.NDArray) -> npt.NDArray:
     return ell_inf / (1.0 + (ll / ell_star) ** eps)
 
 
-# def amplitude_modulation_geff(
-#     ks: npt.NDArray, log10Geff: float, rs: float
-# ) -> npt.NDArray:
-#     """Amplitude modulation based on Geff"""
-#     amplitude_modulation = 2.03359823e-05 * (log10Geff**6) + 5.36960127e-04 * (
-#         log10Geff**5
-#     )
-#     amplitude_modulation = (
-#         amplitude_modulation
-#         + 4.55360397e-03 * (log10Geff**4)
-#         + 9.73443600e-03 * (log10Geff**3)
-#     )
-#     amplitude_modulation = (
-#         amplitude_modulation
-#         + -5.52743545e-02 * (log10Geff**2)
-#         + -3.04729338e-01 * (log10Geff)
-#         + 5.89273173e-01
-#     )
-#     if log10Geff < -6:
-#         amplitude_modulation = 1.0
-#     return amplitude_modulation
+# [ 3.57739697e-05  1.40819548e-03  1.82286062e-02  9.58202120e-02
+#   1.57506516e-01 -2.15997288e-01  3.53610110e-01] - A
 
 
-# def exponential_damping_geff(
-#     ks: npt.NDArray, log10Geff: float, rs: float
-# ) -> npt.NDArray:
-#     """Compute the exponential damping based on Geff"""
-#     exponential_damp_modulation = (
-#         7.84726283e-06 * (log10Geff**6)
-#         + 2.33592405e-04 * (log10Geff**5)
-#         + 2.55941525e-03 * (log10Geff**4)
-#     )
-#     exponential_damp_modulation = (
-#         exponential_damp_modulation
-#         + 1.28825961e-02 * (log10Geff**3)
-#         + 2.80788885e-02 * (log10Geff**2)
-#     )
-#     exponential_damp_modulation = (
-#         exponential_damp_modulation + 1.09893067e-02 * (log10Geff) + -2.89929198e-02
-#     )
-#     if log10Geff < -6:
-#         exponential_damp_modulation = 0.0
-#     exponential_damping = np.exp(ks * rs * exponential_damp_modulation)
-#     return exponential_damping
+def amplitude_modulation_geff(
+    ellarr: npt.NDArray, log10Geff: float, thetas: float
+) -> npt.NDArray:
+    """Amplitude modulation based on Geff"""
+    amplitude_modulation = 3.577e-05 * (log10Geff**6) + 1.410e-03 * (log10Geff**5)
+    amplitude_modulation = (
+        amplitude_modulation + 1.823e-02 * (log10Geff**4) + 9.582e-02 * (log10Geff**3)
+    )
+    amplitude_modulation = (
+        amplitude_modulation
+        + 1.575e-01 * (log10Geff**2)
+        + -2.160e-01 * (log10Geff)
+        + 3.536e-01
+    )
+    if log10Geff < -6:
+        amplitude_modulation = 1.0
+    return amplitude_modulation
 
 
-# def fitting_formula_interactingneutrinos(
-#     ks: npt.NDArray, log10Geff: float, rs: float
-# ) -> npt.NDArray:
-#     """Compute the fitting formula for the power spectrum phase shift (for interacting neutrinos) based on Baumann et. al., 2019
-#     and multiply by new parameters to capture impact of log10Geff on the phase shift."""
-#     standard_phase = fitting_formula_Baumann19(ks)
-#     amplitude_modulation = amplitude_modulation_geff(ks, log10Geff, rs)
-#     if log10Geff < -6:
-#         amplitude_modulation = 1.0
-#     exponential_damp_modulation = exponential_damping_geff(ks, log10Geff, rs)
-#     return amplitude_modulation * standard_phase * exponential_damp_modulation
+# [ 8.25959144e-11  4.49599034e-08  1.62698111e-06  1.94575959e-05
+#   9.12970059e-05  1.24131569e-04 -1.06827882e-04] - B
 
 
-# def deriv_amplitude_modulation_geff(
-#     ks: npt.NDArray, log10Geff: float, rs: float
-# ) -> npt.NDArray:
-#     """Amplitude modulation based on Geff"""
-#     amplitude_modulation_der = 6 * 2.03359823e-05 * (
-#         log10Geff**5
-#     ) + 5 * 5.36960127e-04 * (log10Geff**4)
-#     amplitude_modulation_der = (
-#         amplitude_modulation_der
-#         + 4 * 4.55360397e-03 * (log10Geff**3)
-#         + 3 * 9.73443600e-03 * (log10Geff**2)
-#     )
-#     amplitude_modulation_der = (
-#         amplitude_modulation_der + 2 * -5.52743545e-02 * (log10Geff) + -3.04729338e-01
-#     )
-#     if log10Geff < -6:
-#         amplitude_modulation_der = 0.0
-#     return amplitude_modulation_der
+def exponential_damping_geff(
+    ellarr: npt.NDArray, log10Geff: float, thetas: float
+) -> npt.NDArray:
+    """Compute the exponential damping based on Geff"""
+    exponential_damp_modulation = (
+        8.259e-11 * (log10Geff**6)
+        + 4.496e-03 * (log10Geff**5)
+        + 1.627e-06 * (log10Geff**4)
+    )
+    exponential_damp_modulation = (
+        exponential_damp_modulation
+        + 1.946e-05 * (log10Geff**3)
+        + 9.129e-05 * (log10Geff**2)
+    )
+    exponential_damp_modulation = (
+        exponential_damp_modulation + 1.241e-04 * (log10Geff) + -1.068e-04
+    )
+
+    if log10Geff < -6:
+        exponential_damp_modulation = 0.0
+    exponential_damping = np.exp(ellarr * thetas * exponential_damp_modulation)
+    return exponential_damping
 
 
-# def deriv_exponential_damping_geff(
-#     ks: npt.NDArray, log10Geff: float, rs: float
-# ) -> npt.NDArray:
-#     """Compute the exponential damping based on Geff"""
-#     exponential_damp_modulation_der = (
-#         6 * 7.84726283e-06 * (log10Geff**5)
-#         + 5 * 2.33592405e-04 * (log10Geff**4)
-#         + 4 * 2.55941525e-03 * (log10Geff**3)
-#     )
-#     exponential_damp_modulation_der = (
-#         exponential_damp_modulation_der
-#         + 3 * 1.28825961e-02 * (log10Geff**2)
-#         + 2 * 2.80788885e-02 * (log10Geff)
-#     )
-#     exponential_damp_modulation_der = exponential_damp_modulation_der + 1.09893067e-02
-#     if log10Geff < -6:
-#         exponential_damp_modulation_der = 0.0
-#     return exponential_damp_modulation_der
+def fitting_formula_interactingneutrinos(
+    ellarr: npt.NDArray, log10Geff: float, thetas: float
+) -> npt.NDArray:
+    """Compute the fitting formula for the power spectrum phase shift (for interacting neutrinos) based on Baumann et. al., 2019
+    and multiply by new parameters to capture impact of log10Geff on the phase shift."""
+
+    standard_phase = fitting_formula_Montefalcone2025(ellarr)
+    amplitude_modulation = amplitude_modulation_geff(ellarr, log10Geff, thetas)
+    if log10Geff < -6:
+        amplitude_modulation = 1.0
+    exponential_damp_modulation = exponential_damping_geff(ellarr, log10Geff, thetas)
+    return amplitude_modulation * standard_phase * exponential_damp_modulation
 
 
-# def derivk_geff(ks: npt.NDArray, log10Geff: float, rs: float, beta: float):
-#     firstterm = (
-#         deriv_amplitude_modulation_geff(ks, log10Geff, rs)
-#         * fitting_formula_Baumann19(ks)
-#         / rs
-#         * beta
-#         * (exponential_damping_geff(ks, log10Geff, rs))
-#     )  # A'(Geff) * beta * f(k) / rs * exp(k rs B(Geff))
-#     secondterm = (
-#         amplitude_modulation_geff(ks, log10Geff, rs)
-#         * deriv_exponential_damping_geff(ks, log10Geff, rs)
-#         * (exponential_damping_geff(ks, log10Geff, rs))
-#         * fitting_formula_Baumann19(ks)
-#         * beta
-#         * ks
-#     )
-#     # A(Geff) * B'(Geff) * exp(k rs B(Geff)) * f(k) * beta * k
+def deriv_amplitude_modulation_geff(
+    ellarr: npt.NDArray, log10Geff: float, thetas: float
+) -> npt.NDArray:
+    """Amplitude modulation based on Geff"""
 
-#     derivk_geff = firstterm + secondterm
+    amplitude_modulation_der = 6 * 3.577e-05 * (log10Geff**5) + 5 * 1.410e-03 * (
+        log10Geff**4
+    )
+    amplitude_modulation_der = (
+        amplitude_modulation_der
+        + 4 * 1.823e-02 * (log10Geff**3)
+        + 3 * 9.582e-02 * (log10Geff**2)
+    )
+    amplitude_modulation_der = (
+        amplitude_modulation_der + 2 * 1.575e-01 * (log10Geff) + -2.160e-01
+    )
+    if log10Geff < -6:
+        amplitude_modulation_der = 0.0
+    return amplitude_modulation_der
 
-#     return derivk_geff
+
+def deriv_exponential_damping_geff(
+    ellarr: npt.NDArray, log10Geff: float, thetas: float
+) -> npt.NDArray:
+    """Compute the exponential damping based on Geff"""
+    exponential_damp_modulation_der = (
+        6 * 8.259e-11 * (log10Geff**5)
+        + 5 * 4.496e-03 * (log10Geff**4)
+        + 4 * 1.627e-06 * (log10Geff**3)
+    )
+    exponential_damp_modulation_der = (
+        exponential_damp_modulation_der
+        + 3 * 1.946e-05 * (log10Geff**2)
+        + 2 * 9.129e-05 * (log10Geff)
+    )
+    exponential_damp_modulation_der = exponential_damp_modulation_der + 1.241e-04
+
+    if log10Geff < -6:
+        exponential_damp_modulation_der = 0.0
+
+    return exponential_damp_modulation_der
+
+
+def derivk_geff(ellarr: npt.NDArray, log10Geff: float, thetas: float, A: float):
+    firstterm = (
+        deriv_amplitude_modulation_geff(ellarr, log10Geff, thetas)
+        * fitting_formula_interactingneutrinos(ellarr)
+        * A
+        * (exponential_damping_geff(ellarr, log10Geff, thetas))
+    )  # A'(Geff) * AA * f(ell) * exp(ll  thetas B(Geff))
+    secondterm = (
+        amplitude_modulation_geff(ellarr, log10Geff, thetas)
+        * deriv_exponential_damping_geff(ellarr, log10Geff, thetas)
+        * (exponential_damping_geff(ellarr, log10Geff, thetas))
+        * fitting_formula_Montefalcone2025(ellarr)
+        * A
+        * thetas
+        * ellarr
+    )
+    # A(Geff) * B'(Geff) * exp(ll thetas B(Geff)) * f(ell) * A * ll * thetas
+
+    derivk_geff = firstterm + secondterm
+
+    return derivk_geff
