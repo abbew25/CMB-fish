@@ -102,7 +102,7 @@ def compute_deriv_omegacdm(cosmo: CosmoResults, fracstep: float = 0.002):
 def compute_deriv_As(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_before = splev(cosmo.ell, cosmo.clTT_minAs)
     cl_after = splev(cosmo.ell, cosmo.clTT_plusAs)
-    deltaAs = fracstep * cosmo.lnAs10
+    deltaAs = fracstep * np.power(cosmo.lnAs10, 10.0)
     derCl_As = (cl_after - cl_before) / (2.0 * deltaAs)
     derCl_As_interpTT = interp1d(cosmo.ell, derCl_As)
 
@@ -159,8 +159,7 @@ def compute_deriv_tau(cosmo: CosmoResults, fracstep: float = 0.002):
     return derCl_tau_interpTT, derCl_tau_interpEE, derCl_tau_interpTE
 
 
-def compute_deriv_phiamplitude(cosmo: CosmoResults):
-    dl = 0.01
+def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.01):
     clTT = splev(cosmo.ell, cosmo.clTT)
     clEE = splev(cosmo.ell, cosmo.clEE)
     clTE = splev(cosmo.ell, cosmo.clTE)
@@ -223,8 +222,6 @@ def compute_deriv_phiamplitude(cosmo: CosmoResults):
 
 def Fish(
     cosmo: CosmoResults,
-    lmin: float,
-    lmax: float,
     derClthetastar: list,
     derClbeta: list,
     derClOmegab: list,
@@ -251,7 +248,10 @@ def Fish(
     """
     # Uses Simpson's rule or adaptive quadrature to integrate over all k and mu.
     # mu and k values for Simpson's rule
-    lvec = np.arange(lmin, lmax)
+    lvec = np.arange(
+        np.min([cosmo.lminTT, cosmo.lminTE, cosmo.lminEE]),
+        np.max([cosmo.lmaxTT, cosmo.lmaxTE, cosmo.lmaxEE]),
+    )
 
     # 2D integration
     ManyFish = simps(
@@ -382,6 +382,13 @@ def CastNet(
             ]
         )
 
+        if lval < cosmo.lminTT or lval > cosmo.lmaxTT:
+            derCl[:, 0] = 0.0
+        if lval < cosmo.lminEE or lval > cosmo.lmaxEE:
+            derCl[:, 1] = 0.0
+        if lval < cosmo.lminTE or lval > cosmo.lmaxTE:
+            derCl[:, 2] = 0.0
+
         if not geff_fixed:
             derCl = np.vstack(
                 (derCl, ([derClgeffval[0][i], derClgeffval[1][i], derClgeffval[2][i]]))
@@ -419,18 +426,19 @@ def compute_inv_cov(
     cov_inv: np.ndarray
     """
 
-    deltab = np.array([33, 23, 14, 10, 7, 5, 5]) / 3437.75
+    deltabT = np.array([33, 23, 14, 10, 7, 5, 5]) / 3437.75
+    deltabE = np.array([14, 10, 7, 5, 5]) / 3437.75
     deltaT = np.array([145, 149, 137, 65, 43, 66, 200]) / 3437.75
     deltaE = np.array([450.0, 103.0, 81.0, 134.0, 406.0]) / 3437.75
     Nl_freqT = (
         1.0
         / (deltaT**2)
-        * np.exp(-1.0 * lval * (lval + 1.0) * deltab**2 / (8.0 * np.log(2.0)))
+        * np.exp(-1.0 * lval * (lval + 1.0) * deltabT**2 / (8.0 * np.log(2.0)))
     )
     Nl_freqE = (
         1.0
         / (deltaE**2)
-        * np.exp(-1.0 * lval * (lval + 1.0) * deltab**2 / (8.0 * np.log(2.0)))
+        * np.exp(-1.0 * lval * (lval + 1.0) * deltabE**2 / (8.0 * np.log(2.0)))
     )
     Nl_DeltaT = 1.0 / np.sum(Nl_freqT)
     Nl_DeltaE = 1.0 / np.sum(Nl_freqE)

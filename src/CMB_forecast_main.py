@@ -7,6 +7,7 @@ from fishercomputations import (
 )
 from setup import CosmoResults, write_fisher
 from rich.console import Console
+import copy
 
 if __name__ == "__main__":
     console = Console()
@@ -18,12 +19,12 @@ if __name__ == "__main__":
     if "geff_fixed" not in pardict:
         pardict["geff_fixed"] = True
 
-    fracstepthetastar = 0.01
-    fracstepomegab = 0.01
-    fracstepomegacdm = 0.01
-    fracstepAs = 0.01
-    fracstepns = 0.01
-    fracsteptau = 0.01
+    fracstepthetastar = 0.0001
+    fracstepomegab = 0.0001
+    fracstepomegacdm = 0.0001
+    fracstepAs = 0.0001
+    fracstepns = 0.0001
+    fracsteptau = 0.0001
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -52,20 +53,14 @@ if __name__ == "__main__":
         fracstepns=fracstepns,
         fracsteptau=fracsteptau,
     )
-    derClthetastarTT, derClthetastarEE, derClthetastarTE = derivatives[0]
 
-    derClATT, derClAEE, derClATE = derivatives[1]
-
+    derClATT, derClAEE, derClATE = derivatives[0]
+    derClthetastarTT, derClthetastarEE, derClthetastarTE = derivatives[1]
     derClOmegabTT, derClOmegabEE, derClOmegabTE = derivatives[2]
-
     derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE = derivatives[3]
-
     derClAsTT, derClAsEE, derClAsTE = derivatives[4]
-
     derClnsTT, derClnsEE, derClnsTE = derivatives[5]
-
     derCltauTT, derCltauEE, derCltauTE = derivatives[6]
-
     derClgeff = []
     if not pardict.as_bool("geff_fixed"):
         derClgeffTT, derClgeffEE, derClgeffTE = derivatives[7]
@@ -97,18 +92,16 @@ if __name__ == "__main__":
 
     if pardict.as_bool("geff_fixed"):
         console.log(
-            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegab   Omegab_err(%)  Omegacdm  Omegacdm_err(%)  lnAs10  lnAs10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
+            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegab   Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
         )
 
     else:
         console.log(
-            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegab   Omegab_err(%)  Omegacdm  Omegacdm_err(%)  lnAs10  lnAs10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
+            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegab   Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
         )
 
     Catch = Fish(
         cosmo,
-        float(pardict["lmin"]),
-        float(pardict["lmax"]),
         [derClthetastarTT, derClthetastarEE, derClthetastarTE],
         [derClATT, derClAEE, derClATE],
         [derClOmegabTT, derClOmegabEE, derClOmegabTE],
@@ -120,6 +113,9 @@ if __name__ == "__main__":
         pardict.as_bool("geff_fixed"),
     )
 
+    # add prior on tau
+    Catch[-1][-1] += 1.0 / (0.01**2)
+
     cov = np.linalg.inv(Catch)
     errs = np.sqrt(np.diag(cov))
     means = np.array(
@@ -128,7 +124,7 @@ if __name__ == "__main__":
             cosmo.A_phi,
             cosmo.Omegab,
             cosmo.Omega_cdm,
-            cosmo.lnAs10,
+            np.power(cosmo.lnAs10, 10.0),
             cosmo.ns,
             cosmo.tau,
             cosmo.log10Geff,
@@ -141,7 +137,7 @@ if __name__ == "__main__":
                 cosmo.A_phi,
                 cosmo.Omegab,
                 cosmo.Omega_cdm,
-                cosmo.lnAs10,
+                np.power(cosmo.lnAs10, 10.0),
                 cosmo.ns,
                 cosmo.tau,
             ]
@@ -193,6 +189,27 @@ if __name__ == "__main__":
         means,
     )
 
+    Catch_standard = copy.deepcopy(Catch)
+    Catch_standard = np.delete(Catch_standard, 1, axis=0)
+    Catch_standard = np.delete(Catch_standard, 1, axis=1)
+
+    print(np.sqrt(np.diag(np.linalg.inv(Catch_standard))))
+
+    # console.log(
+    #     Catch
+    # )
+
+    # import matplotlib.pyplot as plt
+    # plt.imshow(Catch)
+
+    # plt.show()
+
+    # for i in range(len(Catch)):
+    #     for j in range(len(Catch)):
+    #         if i < j:
+    #             print(i, j)
+    #             print(Catch[i,j] - Catch[j,i])
+
     alpha_nu = 8.0 / 7.0 * (11.0 / 4.0) ** (4.0 / 3.0)
     eps_neff1 = 1.0 / (1.0 + alpha_nu)
     eps_neffstandard = 3.044 / (3.044 + alpha_nu)
@@ -226,9 +243,9 @@ if __name__ == "__main__":
                 columns=[
                     r"$100\theta_*$",
                     r"$A_{\phi}$",
-                    r"$\Omega_b$",
-                    r"$\Omega_{\mathrm{cdm}}$",
-                    r"$ln(A_s10^{10})$",
+                    r"$\Omega_bh^2$",
+                    r"$\Omega_{\mathrm{cdm}}h^2$",
+                    r"$(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
                 ],
@@ -252,9 +269,9 @@ if __name__ == "__main__":
                 columns=[
                     r"$100\theta_*$",
                     r"$A_{\phi}$",
-                    r"$\Omega_b$",
-                    r"$\Omega_{\mathrm{cdm}}$",
-                    r"$ln(A_s10^{10})$",
+                    r"$\Omega_b$h^2",
+                    r"$\Omega_{\mathrm{cdm}}h^2$",
+                    r"$(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
                     r"$\log_{10}G_{\mathrm{eff}}$",

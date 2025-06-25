@@ -32,8 +32,8 @@ class CosmoResults:
             self.area,
         ) = self.run_camb(pardict)
 
-        pardictbefore = pardict.copy()
-        pardictafter = pardict.copy()
+        pardictbefore = copy.deepcopy(pardict)
+        pardictafter = copy.deepcopy(pardict)
         pardictbefore["thetastar"] = self.theta_star * (1.0 - fracstepthetastar) / 100.0
         del pardictbefore["h"]
         pardictafter["thetastar"] = self.theta_star * (1.0 + fracstepthetastar) / 100.0
@@ -49,8 +49,8 @@ class CosmoResults:
         self.clEE_plusthetastar = self.plus_thstar[2]
         self.clTE_plusthetastar = self.plus_thstar[3]
 
-        pardictbefore = pardict.copy()
-        pardictafter = pardict.copy()
+        pardictbefore = copy.deepcopy(pardict)
+        pardictafter = copy.deepcopy(pardict)
         pardictbefore["omega_b"] = self.Omegab * (1.0 - fracstepomegab)
         pardictafter["omega_b"] = self.Omegab * (1.0 + fracstepomegab)
 
@@ -63,8 +63,8 @@ class CosmoResults:
         self.clEE_plusOmegab = self.plus_Omegab[2]
         self.clTE_plusOmegab = self.plus_Omegab[3]
 
-        pardictbefore = pardict.copy()
-        pardictafter = pardict.copy()
+        pardictbefore = copy.deepcopy(pardict)
+        pardictafter = copy.deepcopy(pardict)
         pardictbefore["omega_cdm"] = self.Omega_cdm * (1.0 - fracstepomegacdm)
         pardictafter["omega_cdm"] = self.Omega_cdm * (1.0 + fracstepomegacdm)
 
@@ -77,10 +77,12 @@ class CosmoResults:
         self.clEE_plusOmegacdm = self.plus_Omegacdm[2]
         self.clTE_plusOmegacdm = self.plus_Omegacdm[3]
 
-        pardictbefore = pardict.copy()
-        pardictafter = pardict.copy()
-        pardictbefore["A_s"] = np.exp(self.lnAs10 * (1.0 - fracstepAs)) * 1.0e-10
-        pardictafter["A_s"] = np.exp(self.lnAs10 * (1.0 + fracstepAs)) * 1.0e-10
+        pardictbefore = copy.deepcopy(pardict)
+        pardictafter = copy.deepcopy(pardict)
+        pardictbefore["A_s"] = (
+            np.power(self.lnAs10, 10.0) * (1.0 - fracstepAs) * 1.0e-10
+        )
+        pardictafter["A_s"] = np.power(self.lnAs10, 10.0) * (1.0 + fracstepAs) * 1.0e-10
         self.minus_As = self.run_camb(pardictbefore)
         self.clTT_minAs = self.minus_As[1]
         self.clEE_minAs = self.minus_As[2]
@@ -90,8 +92,8 @@ class CosmoResults:
         self.clEE_plusAs = self.plus_As[2]
         self.clTE_plusAs = self.plus_As[3]
 
-        pardictbefore = pardict.copy()
-        pardictafter = pardict.copy()
+        pardictbefore = copy.deepcopy(pardict)
+        pardictafter = copy.deepcopy(pardict)
         pardictbefore["n_s"] = self.ns * (1.0 - fracstepns)
         pardictafter["n_s"] = self.ns * (1.0 + fracstepns)
         self.minus_ns = self.run_camb(pardictbefore)
@@ -103,8 +105,8 @@ class CosmoResults:
         self.clEE_plusns = self.plus_ns[2]
         self.clTE_plusns = self.plus_ns[3]
 
-        pardictbefore = pardict.copy()
-        pardictafter = pardict.copy()
+        pardictbefore = copy.deepcopy(pardict)
+        pardictafter = copy.deepcopy(pardict)
         pardictbefore["tau_reio"] = float(pardict["tau_reio"]) * (1.0 - fracsteptau)
         pardictafter["tau_reio"] = float(pardict["tau_reio"]) * (1.0 + fracsteptau)
         self.minus_tau = self.run_camb(pardictbefore)
