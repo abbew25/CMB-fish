@@ -52,17 +52,23 @@ if __name__ == "__main__":
         fracstepns=fracstepns,
         fracsteptau=fracsteptau,
     )
-    derClthetastar = derivatives[0]
-    derClA = derivatives[1]
-    derClOmegab = derivatives[2]
-    derClOmegacdm = derivatives[3]
-    derClAs = derivatives[4]
-    derClns = derivatives[5]
-    derCltau = derivatives[6]
+    derClthetastarTT, derClthetastarEE, derClthetastarTE = derivatives[0]
 
-    derClgeff = None
+    derClATT, derClAEE, derClATE = derivatives[1]
+
+    derClOmegabTT, derClOmegabEE, derClOmegabTE = derivatives[2]
+
+    derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE = derivatives[3]
+
+    derClAsTT, derClAsEE, derClAsTE = derivatives[4]
+
+    derClnsTT, derClnsEE, derClnsTE = derivatives[5]
+
+    derCltauTT, derCltauEE, derCltauTE = derivatives[6]
+
+    derClgeff = []
     if not pardict.as_bool("geff_fixed"):
-        derClgeff = derivatives[7]
+        derClgeffTT, derClgeffEE, derClgeffTE = derivatives[7]
 
     # import matplotlib.pyplot as plt
     # plt.plot(cosmo.ell, derClA(cosmo.ell))
@@ -70,7 +76,7 @@ if __name__ == "__main__":
     # exit()
 
     # import matplotlib.pyplot as plt
-    # plt.plot(cosmo.ell, splev(cosmo.ell, cosmo.clTT))
+    # plt.plot(cosmo.ell, splev(cosmo.ell, cosmo.clTT)*cosmo.ell*(cosmo.ell+1)/(2*np.pi), label=r"$C_\ell^{TT}$")
     # plt.show()
     # exit()
 
@@ -103,13 +109,13 @@ if __name__ == "__main__":
         cosmo,
         float(pardict["lmin"]),
         float(pardict["lmax"]),
-        derClthetastar,
-        derClA,
-        derClOmegab,
-        derClOmegacdm,
-        derClAs,
-        derClns,
-        derCltau,
+        [derClthetastarTT, derClthetastarEE, derClthetastarTE],
+        [derClATT, derClAEE, derClATE],
+        [derClOmegabTT, derClOmegabEE, derClOmegabTE],
+        [derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE],
+        [derClAsTT, derClAsEE, derClAsTE],
+        [derClnsTT, derClnsEE, derClnsTE],
+        [derCltauTT, derCltauEE, derCltauTE],
         derClgeff,
         pardict.as_bool("geff_fixed"),
     )
@@ -186,6 +192,26 @@ if __name__ == "__main__":
         cov,
         means,
     )
+
+    alpha_nu = 8.0 / 7.0 * (11.0 / 4.0) ** (4.0 / 3.0)
+    eps_neff1 = 1.0 / (1.0 + alpha_nu)
+    eps_neffstandard = 3.044 / (3.044 + alpha_nu)
+
+    A_upper = cosmo.A_phi + errs[1]
+    A_lower = cosmo.A_phi - errs[1]
+
+    eps_upper = A_upper * (eps_neff1 - eps_neffstandard) + eps_neffstandard
+    eps_lower = A_lower * (eps_neff1 - eps_neffstandard) + eps_neffstandard
+
+    eps_centre = cosmo.A_phi * (eps_neff1 - eps_neffstandard) + eps_neffstandard
+
+    neffLower = alpha_nu / (1.0 / eps_upper - 1.0)
+    neffUpper = alpha_nu / (1.0 / eps_lower - 1.0)
+    neff_phi = alpha_nu / (1.0 / eps_centre - 1.0)
+
+    console.log(f"Neff from A_phi: {neff_phi:.3f}")
+    console.log(f"Neff upper limit: {neffUpper:.3f}")
+    console.log(f"Neff lower limit: {neffLower:.3f}")
 
     # make some pretty contour plots
     if pardict.as_bool("geff_fixed"):

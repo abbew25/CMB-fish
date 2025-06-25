@@ -44,8 +44,19 @@ def compute_deriv_thetastar(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_after = splev(cosmo.ell, cosmo.clTT_plusthetastar)
     deltathetastar = fracstep * cosmo.theta_star
     derCl_thetastar = (cl_after - cl_before) / (2.0 * deltathetastar)
-    derCl_thetastar_interp = interp1d(cosmo.ell, derCl_thetastar)
-    return derCl_thetastar_interp
+    derCl_thetastar_interpTT = interp1d(cosmo.ell, derCl_thetastar)
+
+    cl_before = splev(cosmo.ell, cosmo.clEE_minthetastar)
+    cl_after = splev(cosmo.ell, cosmo.clEE_plusthetastar)
+    derCl_thetastar_EE = (cl_after - cl_before) / (2.0 * deltathetastar)
+    derCl_thetastar_interpEE = interp1d(cosmo.ell, derCl_thetastar_EE)
+
+    cl_before = splev(cosmo.ell, cosmo.clTE_minthetastar)
+    cl_after = splev(cosmo.ell, cosmo.clTE_plusthetastar)
+    derCl_thetastar_TE = (cl_after - cl_before) / (2.0 * deltathetastar)
+    derCl_thetastar_interpTE = interp1d(cosmo.ell, derCl_thetastar_TE)
+
+    return derCl_thetastar_interpTT, derCl_thetastar_interpEE, derCl_thetastar_interpTE
 
 
 def compute_deriv_omegab(cosmo: CosmoResults, fracstep: float = 0.002):
@@ -53,8 +64,19 @@ def compute_deriv_omegab(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_after = splev(cosmo.ell, cosmo.clTT_plusOmegab)
     deltaomegab = fracstep * cosmo.Omegab
     derCl_omegab = (cl_after - cl_before) / (2.0 * deltaomegab)
-    derCl_omegab_interp = interp1d(cosmo.ell, derCl_omegab)
-    return derCl_omegab_interp
+    derCl_omegab_interpTT = interp1d(cosmo.ell, derCl_omegab)
+
+    cl_before = splev(cosmo.ell, cosmo.clEE_minOmegab)
+    cl_after = splev(cosmo.ell, cosmo.clEE_plusOmegab)
+    derCl_omegab_EE = (cl_after - cl_before) / (2.0 * deltaomegab)
+    derCl_omegab_interpEE = interp1d(cosmo.ell, derCl_omegab_EE)
+
+    cl_before = splev(cosmo.ell, cosmo.clTE_minOmegab)
+    cl_after = splev(cosmo.ell, cosmo.clTE_plusOmegab)
+    derCl_omegab_TE = (cl_after - cl_before) / (2.0 * deltaomegab)
+    derCl_omegab_interpTE = interp1d(cosmo.ell, derCl_omegab_TE)
+
+    return derCl_omegab_interpTT, derCl_omegab_interpEE, derCl_omegab_interpTE
 
 
 def compute_deriv_omegacdm(cosmo: CosmoResults, fracstep: float = 0.002):
@@ -62,8 +84,19 @@ def compute_deriv_omegacdm(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_after = splev(cosmo.ell, cosmo.clTT_plusOmegacdm)
     deltaomegacdm = fracstep * cosmo.Omega_cdm
     derCl_omegacdm = (cl_after - cl_before) / (2.0 * deltaomegacdm)
-    derCl_omegacdm_interp = interp1d(cosmo.ell, derCl_omegacdm)
-    return derCl_omegacdm_interp
+    derCl_omegacdm_interpTT = interp1d(cosmo.ell, derCl_omegacdm)
+
+    cl_before = splev(cosmo.ell, cosmo.clEE_minOmegacdm)
+    cl_after = splev(cosmo.ell, cosmo.clEE_plusOmegacdm)
+    derCl_omegacdm_EE = (cl_after - cl_before) / (2.0 * deltaomegacdm)
+    derCl_omegacdm_interpEE = interp1d(cosmo.ell, derCl_omegacdm_EE)
+
+    cl_before = splev(cosmo.ell, cosmo.clTE_minOmegacdm)
+    cl_after = splev(cosmo.ell, cosmo.clTE_plusOmegacdm)
+    derCl_omegacdm_TE = (cl_after - cl_before) / (2.0 * deltaomegacdm)
+    derCl_omegacdm_interpTE = interp1d(cosmo.ell, derCl_omegacdm_TE)
+
+    return derCl_omegacdm_interpTT, derCl_omegacdm_interpEE, derCl_omegacdm_interpTE
 
 
 def compute_deriv_As(cosmo: CosmoResults, fracstep: float = 0.002):
@@ -71,8 +104,19 @@ def compute_deriv_As(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_after = splev(cosmo.ell, cosmo.clTT_plusAs)
     deltaAs = fracstep * cosmo.lnAs10
     derCl_As = (cl_after - cl_before) / (2.0 * deltaAs)
-    derCl_As_interp = interp1d(cosmo.ell, derCl_As)
-    return derCl_As_interp
+    derCl_As_interpTT = interp1d(cosmo.ell, derCl_As)
+
+    cl_before = splev(cosmo.ell, cosmo.clEE_minAs)
+    cl_after = splev(cosmo.ell, cosmo.clEE_plusAs)
+    derCl_As_EE = (cl_after - cl_before) / (2.0 * deltaAs)
+    derCl_As_interpEE = interp1d(cosmo.ell, derCl_As_EE)
+
+    cl_before = splev(cosmo.ell, cosmo.clTE_minAs)
+    cl_after = splev(cosmo.ell, cosmo.clTE_plusAs)
+    derCl_As_TE = (cl_after - cl_before) / (2.0 * deltaAs)
+    derCl_As_interpTE = interp1d(cosmo.ell, derCl_As_TE)
+
+    return derCl_As_interpTT, derCl_As_interpEE, derCl_As_interpTE
 
 
 def compute_deriv_ns(cosmo: CosmoResults, fracstep: float = 0.002):
@@ -80,8 +124,19 @@ def compute_deriv_ns(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_after = splev(cosmo.ell, cosmo.clTT_plusns)
     deltans = fracstep * cosmo.ns
     derCl_ns = (cl_after - cl_before) / (2.0 * deltans)
-    derCl_ns_interp = interp1d(cosmo.ell, derCl_ns)
-    return derCl_ns_interp
+    derCl_ns_interpTT = interp1d(cosmo.ell, derCl_ns)
+
+    cl_before = splev(cosmo.ell, cosmo.clEE_minns)
+    cl_after = splev(cosmo.ell, cosmo.clEE_plusns)
+    derCl_ns_EE = (cl_after - cl_before) / (2.0 * deltans)
+    derCl_ns_interpEE = interp1d(cosmo.ell, derCl_ns_EE)
+
+    cl_before = splev(cosmo.ell, cosmo.clTE_minns)
+    cl_after = splev(cosmo.ell, cosmo.clTE_plusns)
+    derCl_ns_TE = (cl_after - cl_before) / (2.0 * deltans)
+    derCl_ns_interpTE = interp1d(cosmo.ell, derCl_ns_TE)
+
+    return derCl_ns_interpTT, derCl_ns_interpEE, derCl_ns_interpTE
 
 
 def compute_deriv_tau(cosmo: CosmoResults, fracstep: float = 0.002):
@@ -89,28 +144,56 @@ def compute_deriv_tau(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_after = splev(cosmo.ell, cosmo.clTT_plustau)
     deltatau = fracstep * cosmo.tau
     derCl_tau = (cl_after - cl_before) / (2.0 * deltatau)
-    derCl_tau_interp = interp1d(cosmo.ell, derCl_tau)
-    return derCl_tau_interp
+    derCl_tau_interpTT = interp1d(cosmo.ell, derCl_tau)
+
+    cl_before = splev(cosmo.ell, cosmo.clEE_mintau)
+    cl_after = splev(cosmo.ell, cosmo.clEE_plustau)
+    derCl_tau_EE = (cl_after - cl_before) / (2.0 * deltatau)
+    derCl_tau_interpEE = interp1d(cosmo.ell, derCl_tau_EE)
+
+    cl_before = splev(cosmo.ell, cosmo.clTE_mintau)
+    cl_after = splev(cosmo.ell, cosmo.clTE_plustau)
+    derCl_tau_TE = (cl_after - cl_before) / (2.0 * deltatau)
+    derCl_tau_interpTE = interp1d(cosmo.ell, derCl_tau_TE)
+
+    return derCl_tau_interpTT, derCl_tau_interpEE, derCl_tau_interpTE
 
 
 def compute_deriv_phiamplitude(cosmo: CosmoResults):
     dl = 0.01
     clTT = splev(cosmo.ell, cosmo.clTT)
-    derCl = FinDiff(0, dl, acc=4)(clTT)
+    clEE = splev(cosmo.ell, cosmo.clEE)
+    clTE = splev(cosmo.ell, cosmo.clTE)
+    derClTT = FinDiff(0, dl, acc=4)(clTT)
+    derClEE = FinDiff(0, dl, acc=4)(clEE)
+    derClTE = FinDiff(0, dl, acc=4)(clTE)
+
     order = 4
-    Clarray = np.empty((2 * order + 1, len(cosmo.ell)))
+    ClarrayTT = np.empty((2 * order + 1, len(cosmo.ell)))
+    ClarrayEE = np.empty((2 * order + 1, len(cosmo.ell)))
+    ClarrayTE = np.empty((2 * order + 1, len(cosmo.ell)))
+
     for i in range(-order, order + 1):
         linterp = cosmo.ell + i * dl
-        Clarray[i + order] = splev(linterp, cosmo.clTT)
-    derCl = FinDiff(0, dl, acc=4)(Clarray)[order]
+        ClarrayTT[i + order] = splev(linterp, cosmo.clTT)
+        ClarrayEE[i + order] = splev(linterp, cosmo.clEE)
+        ClarrayTE[i + order] = splev(linterp, cosmo.clTE)
+
+    derClTT = FinDiff(0, dl, acc=4)(ClarrayTT)[order]
+    derClEE = FinDiff(0, dl, acc=4)(ClarrayEE)[order]
+    derClTE = FinDiff(0, dl, acc=4)(ClarrayTE)[order]
+
     dl_dA = (
-        -1.0
-        * fitting_formula_Montefalcone2025(cosmo.ell)  #  / cosmo.theta_star * 100.0
+        1.0 * fitting_formula_Montefalcone2025(cosmo.ell)  #  / cosmo.theta_star * 100.0
     )
 
-    derCl_A = derCl * dl_dA
-    derCl_A = interp1d(cosmo.ell, derCl_A)
-    return derCl_A
+    derClTT_A = derClTT * dl_dA
+    derClEE_A = derClEE * dl_dA
+    derClTE_A = derClTE * dl_dA
+    derClTT_A = interp1d(cosmo.ell, derClTT_A)
+    derClEE_A = interp1d(cosmo.ell, derClEE_A)
+    derClTE_A = interp1d(cosmo.ell, derClTE_A)
+    return derClTT_A, derClEE_A, derClTE_A
 
 
 # def compute_derive_geff(cosmo: CosmoResults):
@@ -142,14 +225,14 @@ def Fish(
     cosmo: CosmoResults,
     lmin: float,
     lmax: float,
-    derClthetastar: interp1d,
-    derClbeta: interp1d,
-    derClOmegab: interp1d,
-    derClOmegacdm: interp1d,
-    derClAs: interp1d,
-    derClns: interp1d,
-    derCltau: interp1d,
-    derClgeff: interp1d,
+    derClthetastar: list,
+    derClbeta: list,
+    derClOmegab: list,
+    derClOmegacdm: list,
+    derClAs: list,
+    derClns: list,
+    derCltau: list,
+    derClgeff: list,
     geff_fixed: bool = True,
 ):
     """Computes the Fisher information on cosmological parameters theta_star, A_phi (phase shift amplitude due to standard model neutrinos,
@@ -195,14 +278,14 @@ def Fish(
 def CastNet(
     ll: npt.NDArray,
     cosmo: CosmoResults,
-    derClthetastar: interp1d,
-    derClA: interp1d,
-    derClOmegab: interp1d,
-    derClOmegacdm: interp1d,
-    derClAs: interp1d,
-    derClns: interp1d,
-    derCltau: interp1d,
-    derClgeff: interp1d,
+    derClthetastar: list,
+    derClA: list,
+    derClOmegab: list,
+    derClOmegacdm: list,
+    derClAs: list,
+    derClns: list,
+    derCltau: list,
+    derClgeff: list,
     geff_fixed: bool = True,
 ):
     """Compute the Fisher matrix for a vector of ll.
@@ -230,34 +313,85 @@ def CastNet(
     if geff_fixed:
         Shoal = np.empty((7, 7, len(ll)))
 
-    derClAval = derClA(ll)
-    derClgeffval = derClgeff(ll) if not geff_fixed else []
-    derClthetastarval = derClthetastar(ll)
-    derClOmegabval = derClOmegab(ll)
-    derClOmegacdmval = derClOmegacdm(ll)
-    derClAsval = derClAs(ll)
-    derClnsval = derClns(ll)
-    derCltauval = derCltau(ll)
+    derClAval = np.array([derClA[0](ll), derClA[1](ll), derClA[2](ll)])
+    derClgeffval = (
+        np.array([derClgeff[0](ll), derClgeff[1](ll), derClgeff[2](ll)])
+        if not geff_fixed
+        else np.array([])
+    )
+    derClthetastarval = np.array(
+        [derClthetastar[0](ll), derClthetastar[1](ll), derClthetastar[2](ll)]
+    )
+    derClOmegabval = np.array(
+        [derClOmegab[0](ll), derClOmegab[1](ll), derClOmegab[2](ll)]
+    )
+    derClOmegacdmval = np.array(
+        [derClOmegacdm[0](ll), derClOmegacdm[1](ll), derClOmegacdm[2](ll)]
+    )
+    derClAsval = np.array([derClAs[0](ll), derClAs[1](ll), derClAs[2](ll)])
+    derClnsval = np.array([derClns[0](ll), derClns[1](ll), derClns[2](ll)])
+    derCltauval = np.array([derCltau[0](ll), derCltau[1](ll), derCltau[2](ll)])
+
+    Cl_arr = [cosmo.clTT, cosmo.clEE, cosmo.clTE]
+
+    if not cosmo.use_TE and not cosmo.use_EE:
+        derClAval = derClAval[:1]
+        derClgeffval = derClgeffval[:1] if not geff_fixed else np.array([])
+        derClthetastarval = derClthetastarval[:1]
+        derClOmegabval = derClOmegabval[:1]
+        derClOmegacdmval = derClOmegacdmval[:1]
+        derClAsval = derClAsval[:1]
+        derClnsval = derClnsval[:1]
+        derCltauval = derCltauval[:1]
+
+    elif not cosmo.use_EE:
+        derClAval = derClAval[[0, 2]]
+        derClgeffval = derClgeffval[[0, 2]] if not geff_fixed else np.array([])
+        derClthetastarval = derClthetastarval[[0, 2]]
+        derClOmegabval = derClOmegabval[[0, 2]]
+        derClOmegacdmval = derClOmegacdmval[[0, 2]]
+        derClAsval = derClAsval[[0, 2]]
+        derClnsval = derClnsval[[0, 2]]
+        derCltauval = derCltauval[[0, 2]]
+
+    elif not cosmo.use_TE:
+        derClAval = derClAval[:-1]
+        derClgeffval = derClgeffval[:-1] if not geff_fixed else np.array([])
+        derClthetastarval = derClthetastarval[:-1]
+        derClOmegabval = derClOmegabval[:-1]
+        derClOmegacdmval = derClOmegacdmval[:-1]
+        derClAsval = derClAsval[:-1]
+        derClnsval = derClnsval[:-1]
+        derCltauval = derCltauval[:-1]
 
     # Loop over each k and mu value and compute the Fisher information for the cosmological parameters
     for i, lval in enumerate(ll):
         derCl = np.array(
             [
-                derClthetastarval[i],
-                derClAval[i],
-                derClOmegabval[i],
-                derClOmegacdmval[i],
-                derClAsval[i],
-                derClnsval[i],
-                derCltauval[i],
+                np.array(
+                    [derClthetastarval[j][i] for j in range(len(derClthetastarval))]
+                ),
+                np.array([derClAval[j][i] for j in range(len(derClAval))]),
+                np.array([derClOmegabval[j][i] for j in range(len(derClOmegabval))]),
+                np.array(
+                    [derClOmegacdmval[j][i] for j in range(len(derClOmegacdmval))]
+                ),
+                np.array([derClAsval[j][i] for j in range(len(derClAsval))]),
+                np.array([derClnsval[j][i] for j in range(len(derClnsval))]),
+                np.array([derCltauval[j][i] for j in range(len(derCltauval))]),
             ]
         )
+
         if not geff_fixed:
-            derCl.append(derClgeffval[i])
+            derCl = np.vstack(
+                (derCl, ([derClgeffval[0][i], derClgeffval[1][i], derClgeffval[2][i]]))
+            )
 
         covCl, covCl_inv = compute_inv_cov(
-            splev(lval, cosmo.clTT),
+            np.array([splev(lval, Cl_arr[j]) for j in range(len(Cl_arr))]),
             lval,
+            use_TE=cosmo.use_TE,
+            use_EE=cosmo.use_EE,
         )
 
         Shoal[:, :, i] = (
@@ -265,13 +399,17 @@ def CastNet(
             * 0.5
             * cosmo.area
             / (4.0 * np.pi)
-            * np.outer(derCl * covCl_inv, derCl)
+            * derCl
+            @ covCl_inv
+            @ derCl.T
         )
 
     return Shoal
 
 
-def compute_inv_cov(cosmoClval: float, lval: float):
+def compute_inv_cov(
+    cosmoClval: npt.NDArray, lval: float, use_TE: bool = True, use_EE: bool = True
+):
     """Computes the covariance matrix of the auto and cross-power spectra for a given
         ell, as well as its inverse.
 
@@ -283,213 +421,53 @@ def compute_inv_cov(cosmoClval: float, lval: float):
 
     deltab = np.array([33, 23, 14, 10, 7, 5, 5]) / 3437.75
     deltaT = np.array([145, 149, 137, 65, 43, 66, 200]) / 3437.75
-    Nl_freq = (
+    deltaE = np.array([450.0, 103.0, 81.0, 134.0, 406.0]) / 3437.75
+    Nl_freqT = (
         1.0
         / (deltaT**2)
         * np.exp(-1.0 * lval * (lval + 1.0) * deltab**2 / (8.0 * np.log(2.0)))
     )
-    Nl_DeltaT = 1.0 / np.sum(
-        Nl_freq
-    )  # 1/Nl_freq is the variance of the noise in the power spectrum
-    # if not geff_fixed:
-    #     covariance = np.empty((3, 3))
-    # Loop over power spectra of different samples P_12
-    # for ps1, pair1 in enumerate(combinations_with_replacement(range(npop), 2)):
-    #     n1, n2 = pair1
-    #     # Loop over power spectra of different samples P_34
-    #     for ps2, pair2 in enumerate(combinations_with_replacement(range(npop), 2)):
-    #         n3, n4 = pair2
-    #         # Cov(P_12,P_34)
-    #         pk13, pk24 = kaiser[n1] * kaiser[n3] * pk, kaiser[n2] * kaiser[n4] * pk
-    #         pk14, pk23 = kaiser[n1] * kaiser[n4] * pk, kaiser[n2] * kaiser[n3] * pk
-    #         if n1 == n3:
-    #             pk13 += 1.0 / nbar[n1]
-    #         if n1 == n4:
-    #             pk14 += 1.0 / nbar[n1]
-    #         if n2 == n3:
-    #             pk23 += 1.0 / nbar[n2]
-    #         if n2 == n4:
-    #             pk24 += 1.0 / nbar[n2]
-    #         covariance[ps1, ps2] = pk13 * pk24 + pk14 * pk23
+    Nl_freqE = (
+        1.0
+        / (deltaE**2)
+        * np.exp(-1.0 * lval * (lval + 1.0) * deltab**2 / (8.0 * np.log(2.0)))
+    )
+    Nl_DeltaT = 1.0 / np.sum(Nl_freqT)
+    Nl_DeltaE = 1.0 / np.sum(Nl_freqE)
 
-    covariance = 2.0 * (Nl_DeltaT + cosmoClval) ** 2
+    covariance = np.array(
+        (
+            np.array(
+                [
+                    (Nl_DeltaT + cosmoClval[0]) ** 2,
+                    cosmoClval[1] ** 2,
+                    (Nl_DeltaT + cosmoClval[0]) * cosmoClval[1],
+                ]
+            ),
+            np.array(
+                [
+                    cosmoClval[1] ** 2,
+                    (Nl_DeltaE + cosmoClval[2]) ** 2,
+                    (Nl_DeltaE + cosmoClval[2]) * cosmoClval[1],
+                ]
+            ),
+            np.array(
+                [
+                    (Nl_DeltaT + cosmoClval[0]) * cosmoClval[1],
+                    (Nl_DeltaE + cosmoClval[2]) * cosmoClval[1],
+                    0.5 * (cosmoClval[1] ** 2 + cosmoClval[2] * cosmoClval[0]),
+                ]
+            ),
+        )
+    )
 
-    cov_inv = 1.0 / covariance
+    if not use_TE and not use_EE:
+        covariance = covariance[:1, :1]
+    elif not use_EE:
+        covariance = covariance[[0, 2], :][:, [0, 2]]
+    elif not use_TE:
+        covariance = covariance[:2, :2]
+
+    cov_inv = np.linalg.inv(covariance)
 
     return covariance, cov_inv
-
-
-# def shrink_sqr_matrix(sqr_matrix_obj: npt.NDArray, flags: npt.NDArray = np.array([])):
-#     """
-#     Function that removed the rows and columns of a square matrix (numpy matrix) if the rows
-#     and columns that a diagonal element of the matrix coincides with is zero.
-#     e.g. 1 2 3 4
-#          2 1 9 0   ----- >     1 2 4
-#          4 5 0 9               2 1 0
-#          4 3 2 1               4 3 1
-
-#     The third row and column has been removed since M_(2, 2) <= 1e-7
-#     """
-#     a = 0
-#     new_obj = sqr_matrix_obj.copy()
-
-#     if len(flags) >= 1:
-#         new_obj = np.delete(new_obj, flags, 0)
-#         new_obj = np.delete(new_obj, flags, 1)
-
-#     else:
-#         for i in (np.arange(sqr_matrix_obj.shape[0]))[::-1]:
-#             if abs(sqr_matrix_obj[i][i]) <= 1e-13:
-#                 a = i
-#                 new_obj = np.delete(new_obj, a, 0)
-#                 new_obj = np.delete(new_obj, a, 1)
-
-#     return new_obj
-
-
-# def compute_full_deriv(
-#     npop: int,
-#     npk: int,
-#     kaiser: npt.NDArray,
-#     pk: float,
-#     pksmooth: float,
-#     mu: float,
-#     derPalpha: list,
-#     derPbeta: list,
-#     derPgeff: list,
-#     f: float,
-#     sigma8: float,
-#     BAO_only: bool,
-#     beta_phi_fixed: bool = True,
-#     geff_fixed: bool = True,
-# ):
-#     """Computes the derivatives of the power spectrum as a function of
-#         biases*sigma8, fsigma8, alpha_perp and alpha_par (in that order)
-#         at a given k, mu and redshift
-
-#     Parameters
-#     ----------
-#     npop: int
-#         The number of different galaxy populations to consider. This is the number of different bias
-#         parameters we need to take the derivatives with respect to.
-#     npk: int
-#         The number of different auto and cross power spectra to take to derivative of.
-#         Equivalent to npop*(npop+1)/2, but passed in to avoid recomputing for each k/mu value.
-#     kaiser: np.ndarray
-#         The kaiser factors for each galaxy population at a fixed mu and redshift. Has length npop.
-#     pk: float
-#         The power spectrum value at the given k, mu and redshift values.
-#     pksmooth: float
-#         The smoothed power spectrum value at the given k, mu and redshift values.
-#     mu: float
-#         The mu value for the current call.
-#     derPalpha: list
-#         The precomputed derivatives of dP(k')/dalpha_perp and dP(k')/dalpha_par at the specific
-#         value of k, mu and redshift. Contains 2 values, the first is the derivative w.r.t. alpha_perp,
-#         the second is the derivative w.r.t. alpha_par.
-#     f: float
-#         The growth rate of structure at the current redshift.
-#     sigma8: float
-#         The value of sigma8 at the current redshift.
-#     BAO_only: logical
-#         If True compute derivatives w.r.t. to alpha_perp and alpha_par using only the BAO feature in the
-#         power spectra. Otherwise use the full power spectrum and the kaiser factor. The former matches a standard
-#         BAO analysis, the latter is more akin to a 'full-shape' analysis.
-
-#     Returns
-#     -------
-#     derP: np.ndarray
-#         The derivatives of all the auto and cross power spectra w.r.t. biases*sigma8, fsigma8, alpha_perp and alpha_par.
-#         A 2D array where the first dimension corresponds to whichever parameter the derivative is w.r.t. in the following
-#         order [b_0*sigma8 ... b_npop*sigma8], fsigma8, alpha_perp, alpha_par. The second dimension corresponds to the auto
-#         or cross-power spectrum under consideration in the order P_00 , P_01, ... , P_0npop, P_11, P_1npop, ..., P_npopnpop.
-#         The power spectrum order matches the covariance matrix order to allow for easy multiplication.
-#     """
-
-#     derP = np.zeros((npop + 3, npk))
-#     if beta_phi_fixed and geff_fixed:
-#         derP = np.zeros((npop + 3, npk))
-#     elif not beta_phi_fixed and not geff_fixed:
-#         derP = np.zeros((npop + 5, npk))
-#     else:
-#         derP = np.zeros((npop + 4, npk))
-
-#     # Derivatives of all power spectra w.r.t to the bsigma8 of each population
-#     for i in range(npop):
-#         derP[i, int(i * (npop + (1 - i) / 2))] = 2.0 * kaiser[i] * pk / sigma8
-#         derP[i, int(i * (npop + (1 - i) / 2)) + 1 : int((i + 1) * (npop - i / 2))] = (
-#             kaiser[i + 1 :] * pk / sigma8
-#         )
-#         for j in range(0, i):
-#             derP[i, i + int(j * (npop - (1 + j) / 2))] = kaiser[j] * pk / sigma8
-
-#     # Derivatives of all power spectra w.r.t fsigma8
-#     derP[npop, :] = [
-#         (kaiser[i] + kaiser[j]) * mu**2 * pk / sigma8
-#         for i in range(npop)
-#         for j in range(i, npop)
-#     ]
-
-#     if not beta_phi_fixed and geff_fixed:
-#         # Derivative of beta_phi amplitude w.r.t. alpha_perp and alpha_par
-#         derP[npop + 3, :] = [
-#             kaiser[i] * kaiser[j] * derPbeta[0] * pksmooth
-#             for i in range(npop)
-#             for j in range(i, npop)
-#         ]
-
-#     if not geff_fixed and beta_phi_fixed:
-#         # Derivative of geff amplitude w.r.t. alpha_perp and alpha_par
-#         derP[npop + 3, :] = [
-#             kaiser[i] * kaiser[j] * derPgeff[0] * pksmooth
-#             for i in range(npop)
-#             for j in range(i, npop)
-#         ]
-#     if not beta_phi_fixed and not geff_fixed:
-#         # Derivative of beta_phi amplitude w.r.t. alpha_perp and alpha_par
-#         derP[npop + 3, :] = [
-#             kaiser[i] * kaiser[j] * derPbeta[0] * pksmooth
-#             for i in range(npop)
-#             for j in range(i, npop)
-#         ]
-#         # Derivative of geff amplitude w.r.t. alpha_perp and alpha_par
-#         derP[npop + 4, :] = [
-#             kaiser[i] * kaiser[j] * derPgeff[0] * pksmooth
-#             for i in range(npop)
-#             for j in range(i, npop)
-#         ]
-
-#     # Derivatives of all power spectra w.r.t the alphas centred on alpha_per = alpha_par = 1.0
-#     if BAO_only:
-#         # For BAO_only we only include information on the alpha parameters
-#         # from the BAO wiggles, and not the Kaiser factor
-#         derP[npop + 1, :] = [
-#             kaiser[i] * kaiser[j] * derPalpha[0] * pksmooth
-#             for i in range(npop)
-#             for j in range(i, npop)
-#         ]
-#         derP[npop + 2, :] = [
-#             kaiser[i] * kaiser[j] * derPalpha[1] * pksmooth
-#             for i in range(npop)
-#             for j in range(i, npop)
-#         ]
-
-#     else:
-#         # Derivative of mu'**2 w.r.t alpha_perp. Derivative w.r.t. alpha_par is -dmudalpha
-#         dmudalpha = 2.0 * mu**2 * (1.0 - mu**2)
-
-#         # We then just need use to the product rule as we already precomputed dP(k')/dalpha
-#         derP[npop + 1, :] = [
-#             (kaiser[i] + kaiser[j]) * f * pk * dmudalpha
-#             + kaiser[i] * kaiser[j] * derPalpha[0]
-#             for i in range(npop)
-#             for j in range(i, npop)
-#         ]
-#         derP[npop + 2, :] = [
-#             -(kaiser[i] + kaiser[j]) * f * pk * dmudalpha
-#             + kaiser[i] * kaiser[j] * derPalpha[1]
-#             for i in range(npop)
-#             for j in range(i, npop)
-#         ]
-
-#     return derP

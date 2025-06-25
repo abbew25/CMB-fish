@@ -19,6 +19,8 @@ class CosmoResults:
         (
             self.ell,
             self.clTT,
+            self.clEE,
+            self.clTE,
             self.theta_star,
             self.Omegab,
             self.Omega_cdm,
@@ -39,9 +41,13 @@ class CosmoResults:
 
         self.minus_thstar = self.run_camb(pardictbefore)
         self.clTT_minthetastar = self.minus_thstar[1]
+        self.clEE_minthetastar = self.minus_thstar[2]
+        self.clTE_minthetastar = self.minus_thstar[3]
 
         self.plus_thstar = self.run_camb(pardictafter)
         self.clTT_plusthetastar = self.plus_thstar[1]
+        self.clEE_plusthetastar = self.plus_thstar[2]
+        self.clTE_plusthetastar = self.plus_thstar[3]
 
         pardictbefore = pardict.copy()
         pardictafter = pardict.copy()
@@ -50,8 +56,12 @@ class CosmoResults:
 
         self.minus_Omegab = self.run_camb(pardictbefore)
         self.clTT_minOmegab = self.minus_Omegab[1]
+        self.clEE_minOmegab = self.minus_Omegab[2]
+        self.clTE_minOmegab = self.minus_Omegab[3]
         self.plus_Omegab = self.run_camb(pardictafter)
         self.clTT_plusOmegab = self.plus_Omegab[1]
+        self.clEE_plusOmegab = self.plus_Omegab[2]
+        self.clTE_plusOmegab = self.plus_Omegab[3]
 
         pardictbefore = pardict.copy()
         pardictafter = pardict.copy()
@@ -60,8 +70,12 @@ class CosmoResults:
 
         self.minus_Omegacdm = self.run_camb(pardictbefore)
         self.clTT_minOmegacdm = self.minus_Omegacdm[1]
+        self.clEE_minOmegacdm = self.minus_Omegacdm[2]
+        self.clTE_minOmegacdm = self.minus_Omegacdm[3]
         self.plus_Omegacdm = self.run_camb(pardictafter)
         self.clTT_plusOmegacdm = self.plus_Omegacdm[1]
+        self.clEE_plusOmegacdm = self.plus_Omegacdm[2]
+        self.clTE_plusOmegacdm = self.plus_Omegacdm[3]
 
         pardictbefore = pardict.copy()
         pardictafter = pardict.copy()
@@ -69,8 +83,12 @@ class CosmoResults:
         pardictafter["A_s"] = np.exp(self.lnAs10 * (1.0 + fracstepAs)) * 1.0e-10
         self.minus_As = self.run_camb(pardictbefore)
         self.clTT_minAs = self.minus_As[1]
+        self.clEE_minAs = self.minus_As[2]
+        self.clTE_minAs = self.minus_As[3]
         self.plus_As = self.run_camb(pardictafter)
         self.clTT_plusAs = self.plus_As[1]
+        self.clEE_plusAs = self.plus_As[2]
+        self.clTE_plusAs = self.plus_As[3]
 
         pardictbefore = pardict.copy()
         pardictafter = pardict.copy()
@@ -78,8 +96,12 @@ class CosmoResults:
         pardictafter["n_s"] = self.ns * (1.0 + fracstepns)
         self.minus_ns = self.run_camb(pardictbefore)
         self.clTT_minns = self.minus_ns[1]
+        self.clEE_minns = self.minus_ns[2]
+        self.clTE_minns = self.minus_ns[3]
         self.plus_ns = self.run_camb(pardictafter)
         self.clTT_plusns = self.plus_ns[1]
+        self.clEE_plusns = self.plus_ns[2]
+        self.clTE_plusns = self.plus_ns[3]
 
         pardictbefore = pardict.copy()
         pardictafter = pardict.copy()
@@ -87,8 +109,21 @@ class CosmoResults:
         pardictafter["tau_reio"] = float(pardict["tau_reio"]) * (1.0 + fracsteptau)
         self.minus_tau = self.run_camb(pardictbefore)
         self.clTT_mintau = self.minus_tau[1]
+        self.clEE_mintau = self.minus_tau[2]
+        self.clTE_mintau = self.minus_tau[3]
         self.plus_tau = self.run_camb(pardictafter)
         self.clTT_plustau = self.plus_tau[1]
+        self.clEE_plustau = self.plus_tau[2]
+        self.clTE_plustau = self.plus_tau[3]
+
+        self.lminTT = int(pardict["lminTT"])
+        self.lmaxTT = int(pardict["lmaxTT"])
+        self.lminTE = int(pardict["lminTE"])
+        self.lmaxTE = int(pardict["lmaxTE"])
+        self.lminEE = int(pardict["lminEE"])
+        self.lmaxEE = int(pardict["lmaxEE"])
+        self.use_TE = bool(pardict["use_TE"])
+        self.use_EE = bool(pardict["use_EE"])
 
     def run_camb(self, pardict: ConfigObj):
         """Runs an instance of CAMB given the cosmological parameters in pardict and redshift bins
@@ -169,6 +204,8 @@ class CosmoResults:
         )["total"]
 
         clTT = np.array(CMBdat[:, 0][2:])  # *1.0e12
+        clEE = np.array(CMBdat[:, 1][2:])  # *1.0e12
+        clTE = np.array(CMBdat[:, 2][2:])  # *
 
         # Get some derived quantities
         area = float(pardict["skyarea"]) * (np.pi / 180.0) ** 2
@@ -179,7 +216,7 @@ class CosmoResults:
         ns = float(parlinear["n_s"])
         tau = float(parlinear["tau_reio"])
 
-        A_phi = pardict.as_float("A_phi") if "A_phi" in parlinear.keys() else 1.0
+        A_phi = float(parlinear["A_phi"]) if "A_phi" in parlinear.keys() else 0.0
         log10Geff = (
             pardict.as_float("log10Geff") if "log10Geff" in pardict.keys() else -np.inf
         )
@@ -189,13 +226,17 @@ class CosmoResults:
         #     - fitting_formula_Baumann19(kin)
         # ) / theta_star
 
-        ellshift = (A_phi - 1.0) * fitting_formula_Montefalcone2025(ll)  # / theta_star
+        ellshift = (A_phi) * fitting_formula_Montefalcone2025(ll)  # / theta_star
 
         clTT = splrep(ll + ellshift, clTT)
+        clEE = splrep(ll + ellshift, clEE)
+        clTE = splrep(ll + ellshift, clTE)
 
         return (
             ll,
             clTT,
+            clEE,
+            clTE,
             theta_star,
             Omegab,
             Omegacdm,
