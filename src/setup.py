@@ -79,10 +79,8 @@ class CosmoResults:
 
         pardictbefore = copy.deepcopy(pardict)
         pardictafter = copy.deepcopy(pardict)
-        pardictbefore["A_s"] = (
-            np.power(self.lnAs10, 10.0) * (1.0 - fracstepAs) * 1.0e-10
-        )
-        pardictafter["A_s"] = np.power(self.lnAs10, 10.0) * (1.0 + fracstepAs) * 1.0e-10
+        pardictbefore["A_s"] = np.exp(self.lnAs10) * (1.0 - fracstepAs) * 1.0e-10
+        pardictafter["A_s"] = np.exp(self.lnAs10) * (1.0 + fracstepAs) * 1.0e-10
         self.minus_As = self.run_camb(pardictbefore)
         self.clTT_minAs = self.minus_As[1]
         self.clEE_minAs = self.minus_As[2]
@@ -190,7 +188,7 @@ class CosmoResults:
             nnu=float(parlinear["Neff"]),
         )
         pars.NonLinear = camb.model.NonLinear_none
-        pars.set_for_lmax(3000)
+        pars.set_for_lmax(5000)
         # Run CAMB
         results = camb.get_results(pars)
 
@@ -199,10 +197,10 @@ class CosmoResults:
         #     minkh=2.0e-5, maxkh=10.0, npoints=2000
         # )
 
-        ll = np.arange(2, 3001)
+        ll = np.arange(2, 5001)
 
         CMBdat = results.get_cmb_power_spectra(
-            pars, CMB_unit="muK", lmax=3000, raw_cl=True
+            pars, CMB_unit="muK", lmax=5000, raw_cl=True
         )["total"]
 
         clTT = np.array(CMBdat[:, 0][2:])  # *1.0e12
@@ -214,7 +212,7 @@ class CosmoResults:
         theta_star = results.get_derived_params()["thetastar"]
         Omegab = float(parlinear["omega_b"])
         Omegacdm = float(parlinear["omega_cdm"])
-        lnAs10 = np.log10(float(parlinear["A_s"]) * 1.0e10)
+        lnAs10 = np.log(float(parlinear["A_s"]) * 1.0e10)
         ns = float(parlinear["n_s"])
         tau = float(parlinear["tau_reio"])
 

@@ -7,7 +7,6 @@ from fishercomputations import (
 )
 from setup import CosmoResults, write_fisher
 from rich.console import Console
-import copy
 
 if __name__ == "__main__":
     console = Console()
@@ -24,7 +23,7 @@ if __name__ == "__main__":
     fracstepomegacdm = 0.0001
     fracstepAs = 0.0001
     fracstepns = 0.0001
-    fracsteptau = 0.0001
+    fracsteptau = 0.00001
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -114,9 +113,27 @@ if __name__ == "__main__":
     )
 
     # add prior on tau
-    Catch[-1][-1] += 1.0 / (0.01**2)
+    # Catch[-1][-1] += 1.0 / (0.01**2)
+
+    # cov = np.linalg.inv(Catch)
+    # print(np.linalg.cond(Catch))
+
+    # import matplotlib.pyplot as plt
+    # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
+    # plt.colorbar()
+    # plt.show()
+
+    # for i in range(len(Catch)):
+    #     for j in range(len(Catch)):
+    #         if i < j:
+    #             Catch[i, j] = Catch[j, i]
+
+    # Catch[1][1] += 1.0 / (0.1**2)  # add prior on A_phi
+
+    # Catch[2][2] += 1.0 / (0.002**2)  # add prior on Omegab
 
     cov = np.linalg.inv(Catch)
+
     errs = np.sqrt(np.diag(cov))
     means = np.array(
         [
@@ -124,7 +141,7 @@ if __name__ == "__main__":
             cosmo.A_phi,
             cosmo.Omegab,
             cosmo.Omega_cdm,
-            np.power(cosmo.lnAs10, 10.0),
+            cosmo.lnAs10,
             cosmo.ns,
             cosmo.tau,
             cosmo.log10Geff,
@@ -137,14 +154,14 @@ if __name__ == "__main__":
                 cosmo.A_phi,
                 cosmo.Omegab,
                 cosmo.Omega_cdm,
-                np.power(cosmo.lnAs10, 10.0),
+                cosmo.lnAs10,
                 cosmo.ns,
                 cosmo.tau,
             ]
         )
 
     if not pardict.as_bool("geff_fixed"):
-        txt = "{:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
             errs[0] / means[0] * 100.0,
             means[1],
@@ -163,7 +180,7 @@ if __name__ == "__main__":
             errs[7] / means[7] * 100.0,
         )
     else:
-        txt = "{:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
             errs[0] / means[0] * 100.0,
             means[1],
@@ -189,11 +206,11 @@ if __name__ == "__main__":
         means,
     )
 
-    Catch_standard = copy.deepcopy(Catch)
-    Catch_standard = np.delete(Catch_standard, 1, axis=0)
-    Catch_standard = np.delete(Catch_standard, 1, axis=1)
+    # Catch_standard = copy.deepcopy(Catch)
+    # Catch_standard = np.delete(Catch_standard, 1, axis=0)
+    # Catch_standard = np.delete(Catch_standard, 1, axis=1)
 
-    print(np.sqrt(np.diag(np.linalg.inv(Catch_standard))))
+    # print(np.sqrt(np.diag(np.linalg.inv(Catch_standard))))
 
     # console.log(
     #     Catch
@@ -226,9 +243,9 @@ if __name__ == "__main__":
     neffUpper = alpha_nu / (1.0 / eps_lower - 1.0)
     neff_phi = alpha_nu / (1.0 / eps_centre - 1.0)
 
-    console.log(f"Neff from A_phi: {neff_phi:.3f}")
-    console.log(f"Neff upper limit: {neffUpper:.3f}")
-    console.log(f"Neff lower limit: {neffLower:.3f}")
+    console.log(f"Neff from A_phi: {neff_phi:.6f}")
+    console.log(f"Neff upper limit: {neffUpper:.6f}")
+    console.log(f"Neff lower limit: {neffLower:.6f}")
 
     # make some pretty contour plots
     if pardict.as_bool("geff_fixed"):
@@ -245,7 +262,7 @@ if __name__ == "__main__":
                     r"$A_{\phi}$",
                     r"$\Omega_bh^2$",
                     r"$\Omega_{\mathrm{cdm}}h^2$",
-                    r"$(A_s10^{10})$",
+                    r"$\ln(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
                 ],
@@ -271,7 +288,7 @@ if __name__ == "__main__":
                     r"$A_{\phi}$",
                     r"$\Omega_b$h^2",
                     r"$\Omega_{\mathrm{cdm}}h^2$",
-                    r"$(A_s10^{10})$",
+                    r"$\ln(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
                     r"$\log_{10}G_{\mathrm{eff}}$",

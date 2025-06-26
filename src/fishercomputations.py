@@ -43,17 +43,17 @@ def compute_deriv_thetastar(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_before = splev(cosmo.ell, cosmo.clTT_minthetastar)
     cl_after = splev(cosmo.ell, cosmo.clTT_plusthetastar)
     deltathetastar = fracstep * cosmo.theta_star
-    derCl_thetastar = (cl_after - cl_before) / (2.0 * deltathetastar)
+    derCl_thetastar = (cl_after - cl_before) / (2.0 * deltathetastar)  # * 1.0e-2)
     derCl_thetastar_interpTT = interp1d(cosmo.ell, derCl_thetastar)
 
     cl_before = splev(cosmo.ell, cosmo.clEE_minthetastar)
     cl_after = splev(cosmo.ell, cosmo.clEE_plusthetastar)
-    derCl_thetastar_EE = (cl_after - cl_before) / (2.0 * deltathetastar)
+    derCl_thetastar_EE = (cl_after - cl_before) / (2.0 * deltathetastar)  # * 1.0e-2)
     derCl_thetastar_interpEE = interp1d(cosmo.ell, derCl_thetastar_EE)
 
     cl_before = splev(cosmo.ell, cosmo.clTE_minthetastar)
     cl_after = splev(cosmo.ell, cosmo.clTE_plusthetastar)
-    derCl_thetastar_TE = (cl_after - cl_before) / (2.0 * deltathetastar)
+    derCl_thetastar_TE = (cl_after - cl_before) / (2.0 * deltathetastar)  # * 1.0e-2)
     derCl_thetastar_interpTE = interp1d(cosmo.ell, derCl_thetastar_TE)
 
     return derCl_thetastar_interpTT, derCl_thetastar_interpEE, derCl_thetastar_interpTE
@@ -102,7 +102,7 @@ def compute_deriv_omegacdm(cosmo: CosmoResults, fracstep: float = 0.002):
 def compute_deriv_As(cosmo: CosmoResults, fracstep: float = 0.002):
     cl_before = splev(cosmo.ell, cosmo.clTT_minAs)
     cl_after = splev(cosmo.ell, cosmo.clTT_plusAs)
-    deltaAs = fracstep * np.power(cosmo.lnAs10, 10.0)
+    deltaAs = fracstep * cosmo.lnAs10
     derCl_As = (cl_after - cl_before) / (2.0 * deltaAs)
     derCl_As_interpTT = interp1d(cosmo.ell, derCl_As)
 
@@ -334,36 +334,6 @@ def CastNet(
 
     Cl_arr = [cosmo.clTT, cosmo.clEE, cosmo.clTE]
 
-    if not cosmo.use_TE and not cosmo.use_EE:
-        derClAval = derClAval[:1]
-        derClgeffval = derClgeffval[:1] if not geff_fixed else np.array([])
-        derClthetastarval = derClthetastarval[:1]
-        derClOmegabval = derClOmegabval[:1]
-        derClOmegacdmval = derClOmegacdmval[:1]
-        derClAsval = derClAsval[:1]
-        derClnsval = derClnsval[:1]
-        derCltauval = derCltauval[:1]
-
-    elif not cosmo.use_EE:
-        derClAval = derClAval[[0, 2]]
-        derClgeffval = derClgeffval[[0, 2]] if not geff_fixed else np.array([])
-        derClthetastarval = derClthetastarval[[0, 2]]
-        derClOmegabval = derClOmegabval[[0, 2]]
-        derClOmegacdmval = derClOmegacdmval[[0, 2]]
-        derClAsval = derClAsval[[0, 2]]
-        derClnsval = derClnsval[[0, 2]]
-        derCltauval = derCltauval[[0, 2]]
-
-    elif not cosmo.use_TE:
-        derClAval = derClAval[:-1]
-        derClgeffval = derClgeffval[:-1] if not geff_fixed else np.array([])
-        derClthetastarval = derClthetastarval[:-1]
-        derClOmegabval = derClOmegabval[:-1]
-        derClOmegacdmval = derClOmegacdmval[:-1]
-        derClAsval = derClAsval[:-1]
-        derClnsval = derClnsval[:-1]
-        derCltauval = derCltauval[:-1]
-
     # Loop over each k and mu value and compute the Fisher information for the cosmological parameters
     for i, lval in enumerate(ll):
         derCl = np.array(
@@ -382,17 +352,17 @@ def CastNet(
             ]
         )
 
+        if not geff_fixed:
+            derCl = np.vstack(
+                (derCl, ([derClgeffval[0][i], derClgeffval[1][i], derClgeffval[2][i]]))
+            )
+
         if lval < cosmo.lminTT or lval > cosmo.lmaxTT:
             derCl[:, 0] = 0.0
         if lval < cosmo.lminEE or lval > cosmo.lmaxEE:
             derCl[:, 1] = 0.0
         if lval < cosmo.lminTE or lval > cosmo.lmaxTE:
             derCl[:, 2] = 0.0
-
-        if not geff_fixed:
-            derCl = np.vstack(
-                (derCl, ([derClgeffval[0][i], derClgeffval[1][i], derClgeffval[2][i]]))
-            )
 
         covCl, covCl_inv = compute_inv_cov(
             np.array([splev(lval, Cl_arr[j]) for j in range(len(Cl_arr))]),
@@ -401,17 +371,109 @@ def CastNet(
             use_EE=cosmo.use_EE,
         )
 
-        Shoal[:, :, i] = (
-            (2.0 * lval + 1.0)
-            * 0.5
-            * cosmo.area
-            / (4.0 * np.pi)
-            * derCl
-            @ covCl_inv
-            @ derCl.T
-        )
+        for theta1 in range(derCl.shape[0]):
+            for theta2 in range(derCl.shape[0]):
+                derCltheta1 = derCl[theta1, :]
+                derCltheta2 = derCl[theta2, :]
+
+                if not cosmo.use_EE and not cosmo.use_TE:
+                    Shoal[theta1, theta2, i] += (
+                        (2.0 * lval + 1.0)
+                        * 0.5
+                        * cosmo.area
+                        / (4.0 * np.pi)
+                        * derCltheta1[0]
+                        * covCl_inv
+                        * derCltheta2[0]
+                    )
+
+                elif not cosmo.use_EE:
+                    Shoal[theta1, theta2, i] += (
+                        (2.0 * lval + 1.0)
+                        * 0.5
+                        * cosmo.area
+                        / (4.0 * np.pi)
+                        * derCltheta1[[0, 2]]
+                        @ covCl_inv
+                        @ derCltheta2[[0, 2]]
+                    )
+
+                elif not cosmo.use_TE:
+                    Shoal[theta1, theta2, i] += (
+                        (2.0 * lval + 1.0)
+                        * 0.5
+                        * cosmo.area
+                        / (4.0 * np.pi)
+                        * derCltheta1[:2]
+                        @ covCl_inv
+                        @ derCltheta2[:2]
+                    )
+
+                else:
+                    Shoal[theta1, theta2, i] += (
+                        (2.0 * lval + 1.0)
+                        * 0.5
+                        * cosmo.area
+                        / (4.0 * np.pi)
+                        * derCltheta1
+                        @ covCl_inv
+                        @ derCltheta2
+                    )
+
+                # derCovtheta1 = compute_deriv_cov(
+                #     np.array([splev(lval, Cl_arr[j]) for j in range(len(Cl_arr))]),
+                #     derCltheta1,
+                #     use_TE=cosmo.use_TE,
+                #     use_EE=cosmo.use_EE,
+                # )[0]
+
+                # derCovtheta2 = compute_deriv_cov(
+                #     np.array([splev(lval, Cl_arr[j]) for j in range(len(Cl_arr))]),
+                #     derCltheta2,
+                #     use_TE=cosmo.use_TE,
+                #     use_EE=cosmo.use_EE,
+                # )[0]
 
     return Shoal
+
+
+# def compute_deriv_cov(
+#     cosmoClval: npt.NDArray, derivcosmoClval: npt.NDArray, use_TE: bool = True, use_EE: bool = True):
+
+#     derivcovariance = np.array(
+#         (
+#             np.array(
+#                 [
+#                     2.0 * (cosmoClval[0]) * derivcosmoClval[0],
+#                     2.0 * cosmoClval[1] * derivcosmoClval[1],
+#                     derivcosmoClval[1] * cosmoClval[0] + derivcosmoClval[0] * cosmoClval[1],
+#                 ]
+#             ),
+#             np.array(
+#                 [
+#                     2.0 * cosmoClval[1] * derivcosmoClval[1],
+#                     2.0 * cosmoClval[2] * derivcosmoClval[2],
+#                     derivcosmoClval[1] * cosmoClval[2] + derivcosmoClval[2] * cosmoClval[1],
+#                 ]
+#             ),
+#             np.array(
+#                 [
+#                     cosmoClval[0] * derivcosmoClval[1] +  cosmoClval[1] * derivcosmoClval[0],
+#                     derivcosmoClval[1] * cosmoClval[2] + derivcosmoClval[2] * cosmoClval[1],
+#                     cosmoClval[1] * derivcosmoClval[1]  +  0.5 * cosmoClval[2] * derivcosmoClval[0] + 0.5 * cosmoClval[0] * derivcosmoClval[2],
+#                 ]
+#             ),
+#         )
+#     )
+
+#     if not use_TE and not use_EE:
+#         derivcovariance = derivcovariance[:1, :1]
+#     elif not use_EE:
+#         derivcovariance = derivcovariance[[0, 2], :][:, [0, 2]]
+#     elif not use_TE:
+#         derivcovariance = derivcovariance[:2, :2]
+
+#     return derivcovariance
 
 
 def compute_inv_cov(
@@ -426,9 +488,9 @@ def compute_inv_cov(
     cov_inv: np.ndarray
     """
 
-    deltabT = np.array([33, 23, 14, 10, 7, 5, 5]) / 3437.75
+    deltabT = np.array([33.0, 23.0, 14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
     deltabE = np.array([14, 10, 7, 5, 5]) / 3437.75
-    deltaT = np.array([145, 149, 137, 65, 43, 66, 200]) / 3437.75
+    deltaT = np.array([145.0, 149.0, 137.0, 65.0, 43.0, 66.0, 200.0]) / 3437.75
     deltaE = np.array([450.0, 103.0, 81.0, 134.0, 406.0]) / 3437.75
     Nl_freqT = (
         1.0
@@ -442,6 +504,9 @@ def compute_inv_cov(
     )
     Nl_DeltaT = 1.0 / np.sum(Nl_freqT)
     Nl_DeltaE = 1.0 / np.sum(Nl_freqE)
+
+    # Nl_DeltaT = 0.0
+    # Nl_DeltaE = 0.0
 
     covariance = np.array(
         (
