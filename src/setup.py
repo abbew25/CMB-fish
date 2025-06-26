@@ -203,9 +203,16 @@ class CosmoResults:
             pars, CMB_unit="muK", lmax=5000, raw_cl=True
         )["total"]
 
-        clTT = np.array(CMBdat[:, 0][2:])  # *1.0e12
-        clEE = np.array(CMBdat[:, 1][2:])  # *1.0e12
-        clTE = np.array(CMBdat[:, 2][2:])  # *
+        clTT = np.array(CMBdat[:, 0][2:])
+        clEE = np.array(CMBdat[:, 1][2:])
+        clTE = np.array(CMBdat[:, 3][2:])
+
+        # import matplotlib.pyplot as plt
+        # f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 15))
+        # ax1.plot(ll, clTT*ll*(ll+1.0), label="TT")
+        # ax2.plot(ll, clEE*ll*(ll+1.0), label="EE")
+        # ax3.plot(ll, clTE*ll*(ll+1.0), label="TE")
+        # plt.show()
 
         # Get some derived quantities
         area = float(pardict["skyarea"]) * (np.pi / 180.0) ** 2

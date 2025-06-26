@@ -18,12 +18,12 @@ if __name__ == "__main__":
     if "geff_fixed" not in pardict:
         pardict["geff_fixed"] = True
 
-    fracstepthetastar = 0.0001
-    fracstepomegab = 0.0001
-    fracstepomegacdm = 0.0001
-    fracstepAs = 0.0001
-    fracstepns = 0.0001
-    fracsteptau = 0.00001
+    fracstepthetastar = 0.02
+    fracstepomegab = 0.02
+    fracstepomegacdm = 0.02
+    fracstepAs = 0.02
+    fracstepns = 0.02
+    fracsteptau = 0.02
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -93,11 +93,17 @@ if __name__ == "__main__":
         console.log(
             "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegab   Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
         )
+        # console.log(
+        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
+        # )
 
     else:
         console.log(
             "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegab   Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
         )
+        # console.log(
+        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
+        # )
 
     Catch = Fish(
         cosmo,
@@ -123,6 +129,9 @@ if __name__ == "__main__":
     # plt.colorbar()
     # plt.show()
 
+    # Catch = np.delete(Catch, 1, axis=0)
+    # Catch = np.delete(Catch, 1, axis=1)
+
     # for i in range(len(Catch)):
     #     for j in range(len(Catch)):
     #         if i < j:
@@ -139,7 +148,7 @@ if __name__ == "__main__":
         [
             cosmo.theta_star,
             cosmo.A_phi,
-            cosmo.Omegab,
+            cosmo.Omegab * 100.0,
             cosmo.Omega_cdm,
             cosmo.lnAs10,
             cosmo.ns,
@@ -152,7 +161,7 @@ if __name__ == "__main__":
             [
                 cosmo.theta_star,
                 cosmo.A_phi,
-                cosmo.Omegab,
+                cosmo.Omegab * 100.0,
                 cosmo.Omega_cdm,
                 cosmo.lnAs10,
                 cosmo.ns,
@@ -162,6 +171,7 @@ if __name__ == "__main__":
 
     if not pardict.as_bool("geff_fixed"):
         txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+            # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
             errs[0] / means[0] * 100.0,
             means[1],
@@ -181,6 +191,7 @@ if __name__ == "__main__":
         )
     else:
         txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+            # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
             errs[0] / means[0] * 100.0,
             means[1],
@@ -260,7 +271,7 @@ if __name__ == "__main__":
                 columns=[
                     r"$100\theta_*$",
                     r"$A_{\phi}$",
-                    r"$\Omega_bh^2$",
+                    r"$100\Omega_bh^2$",
                     r"$\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
                     r"$n_s$",
@@ -286,7 +297,7 @@ if __name__ == "__main__":
                 columns=[
                     r"$100\theta_*$",
                     r"$A_{\phi}$",
-                    r"$\Omega_b$h^2",
+                    r"$100\Omega_b$h^2",
                     r"$\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
                     r"$n_s$",
