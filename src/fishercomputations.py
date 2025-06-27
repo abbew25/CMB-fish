@@ -40,133 +40,333 @@ def Set_Bait(
 
 
 def compute_deriv_thetastar(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTT_minthetastar)
-    cl_after = splev(cosmo.ell, cosmo.clTT_plusthetastar)
-    deltathetastar = fracstep * cosmo.theta_star
-    derCl_thetastar = (cl_after - cl_before) / (2.0 * deltathetastar)  # * 1.0e-2)
-    derCl_thetastar_interpTT = interp1d(cosmo.ell, derCl_thetastar)
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minthetastar[0])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar[0])
+    cl_centre = splev(cosmo.ell, cosmo.clTT)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minthetastar2[0])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar2[0])
 
-    cl_before = splev(cosmo.ell, cosmo.clEE_minthetastar)
-    cl_after = splev(cosmo.ell, cosmo.clEE_plusthetastar)
-    derCl_thetastar_EE = (cl_after - cl_before) / (2.0 * deltathetastar)  # * 1.0e-2)
-    derCl_thetastar_interpEE = interp1d(cosmo.ell, derCl_thetastar_EE)
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
 
-    cl_before = splev(cosmo.ell, cosmo.clTE_minthetastar)
-    cl_after = splev(cosmo.ell, cosmo.clTE_plusthetastar)
-    derCl_thetastar_TE = (cl_after - cl_before) / (2.0 * deltathetastar)  # * 1.0e-2)
-    derCl_thetastar_interpTE = interp1d(cosmo.ell, derCl_thetastar_TE)
+    d_dthetastar = FinDiff(0, fracstep * cosmo.theta_star, acc=2)
+    derCl_thetastar = d_dthetastar(CLs)
+
+    derCl_thetastar_interpTT = interp1d(cosmo.ell, derCl_thetastar[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minthetastar[1])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar[1])
+    cl_centre = splev(cosmo.ell, cosmo.clEE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minthetastar2[1])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar2[1])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0] = cl_before2
+    CLs[1] = cl_before
+    CLs[2] = cl_centre
+    CLs[3] = cl_after
+    CLs[4] = cl_after2
+
+    derCl_thetastar_EE = d_dthetastar(CLs)
+    derCl_thetastar_interpEE = interp1d(cosmo.ell, derCl_thetastar_EE[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minthetastar[2])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar[2])
+    cl_centre = splev(cosmo.ell, cosmo.clTE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minthetastar2[2])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar2[2])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0] = cl_before2
+    CLs[1] = cl_before
+    CLs[2] = cl_centre
+    CLs[3] = cl_after
+    CLs[4] = cl_after2
+
+    derCl_thetastar_TE = d_dthetastar(CLs)
+    derCl_thetastar_interpTE = interp1d(cosmo.ell, derCl_thetastar_TE[2], kind="cubic")
 
     return derCl_thetastar_interpTT, derCl_thetastar_interpEE, derCl_thetastar_interpTE
 
 
 def compute_deriv_omegab(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTT_minOmegab)
-    cl_after = splev(cosmo.ell, cosmo.clTT_plusOmegab)
-    deltaomegab = fracstep * cosmo.Omegab
-    derCl_omegab = (cl_after - cl_before) / (2.0 * deltaomegab * 100.0)
-    derCl_omegab_interpTT = interp1d(cosmo.ell, derCl_omegab)
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegab[0])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab[0])
+    cl_centre = splev(cosmo.ell, cosmo.clTT)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegab2[0])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab2[0])
 
-    cl_before = splev(cosmo.ell, cosmo.clEE_minOmegab)
-    cl_after = splev(cosmo.ell, cosmo.clEE_plusOmegab)
-    derCl_omegab_EE = (cl_after - cl_before) / (2.0 * deltaomegab * 100.0)
-    derCl_omegab_interpEE = interp1d(cosmo.ell, derCl_omegab_EE)
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
 
-    cl_before = splev(cosmo.ell, cosmo.clTE_minOmegab)
-    cl_after = splev(cosmo.ell, cosmo.clTE_plusOmegab)
-    derCl_omegab_TE = (cl_after - cl_before) / (2.0 * deltaomegab * 100.0)
-    derCl_omegab_interpTE = interp1d(cosmo.ell, derCl_omegab_TE)
+    d_domegab = FinDiff(0, fracstep * cosmo.Omegab, acc=2)
+    derCl_omegab = d_domegab(CLs)
+
+    derCl_omegab_interpTT = interp1d(cosmo.ell, derCl_omegab[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegab[1])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab[1])
+    cl_centre = splev(cosmo.ell, cosmo.clEE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegab2[1])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab2[1])
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_omegab_EE = d_domegab(CLs)
+    derCl_omegab_interpEE = interp1d(cosmo.ell, derCl_omegab_EE[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegab[2])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab[2])
+    cl_centre = splev(cosmo.ell, cosmo.clTE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegab2[2])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab2[2])
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_omegab_TE = d_domegab(CLs)
+    derCl_omegab_interpTE = interp1d(cosmo.ell, derCl_omegab_TE[2], kind="cubic")
 
     return derCl_omegab_interpTT, derCl_omegab_interpEE, derCl_omegab_interpTE
 
 
 def compute_deriv_omegacdm(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTT_minOmegacdm)
-    cl_after = splev(cosmo.ell, cosmo.clTT_plusOmegacdm)
-    deltaomegacdm = fracstep * cosmo.Omega_cdm
-    derCl_omegacdm = (cl_after - cl_before) / (2.0 * deltaomegacdm)
-    derCl_omegacdm_interpTT = interp1d(cosmo.ell, derCl_omegacdm)
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm[0])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm[0])
+    cl_centre = splev(cosmo.ell, cosmo.clTT)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm2[0])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm2[0])
 
-    cl_before = splev(cosmo.ell, cosmo.clEE_minOmegacdm)
-    cl_after = splev(cosmo.ell, cosmo.clEE_plusOmegacdm)
-    derCl_omegacdm_EE = (cl_after - cl_before) / (2.0 * deltaomegacdm)
-    derCl_omegacdm_interpEE = interp1d(cosmo.ell, derCl_omegacdm_EE)
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
 
-    cl_before = splev(cosmo.ell, cosmo.clTE_minOmegacdm)
-    cl_after = splev(cosmo.ell, cosmo.clTE_plusOmegacdm)
-    derCl_omegacdm_TE = (cl_after - cl_before) / (2.0 * deltaomegacdm)
-    derCl_omegacdm_interpTE = interp1d(cosmo.ell, derCl_omegacdm_TE)
+    d_domegacdm = FinDiff(0, fracstep * cosmo.Omega_cdm, acc=2)
+    derCl_omegacdm = d_domegacdm(CLs)
+
+    derCl_omegacdm_interpTT = interp1d(cosmo.ell, derCl_omegacdm[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm[1])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm[1])
+    cl_centre = splev(cosmo.ell, cosmo.clEE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm2[1])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm2[1])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_omegacdm_EE = d_domegacdm(CLs)
+    derCl_omegacdm_interpEE = interp1d(cosmo.ell, derCl_omegacdm_EE[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm[2])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm[2])
+    cl_centre = splev(cosmo.ell, cosmo.clTE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm2[2])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm2[2])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_omegacdm_TE = d_domegacdm(CLs)
+
+    derCl_omegacdm_interpTE = interp1d(cosmo.ell, derCl_omegacdm_TE[2], kind="cubic")
 
     return derCl_omegacdm_interpTT, derCl_omegacdm_interpEE, derCl_omegacdm_interpTE
 
 
 def compute_deriv_As(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTT_minAs)
-    cl_after = splev(cosmo.ell, cosmo.clTT_plusAs)
-    deltaAs = fracstep * cosmo.lnAs10
-    derCl_As = (cl_after - cl_before) / (2.0 * deltaAs)
-    derCl_As_interpTT = interp1d(cosmo.ell, derCl_As)
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minAs[0])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusAs[0])
+    cl_centre = splev(cosmo.ell, cosmo.clTT)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minAs2[0])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusAs2[0])
 
-    cl_before = splev(cosmo.ell, cosmo.clEE_minAs)
-    cl_after = splev(cosmo.ell, cosmo.clEE_plusAs)
-    derCl_As_EE = (cl_after - cl_before) / (2.0 * deltaAs)
-    derCl_As_interpEE = interp1d(cosmo.ell, derCl_As_EE)
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
 
-    cl_before = splev(cosmo.ell, cosmo.clTE_minAs)
-    cl_after = splev(cosmo.ell, cosmo.clTE_plusAs)
-    derCl_As_TE = (cl_after - cl_before) / (2.0 * deltaAs)
-    derCl_As_interpTE = interp1d(cosmo.ell, derCl_As_TE)
+    d_dAs = FinDiff(0, fracstep * cosmo.lnAs10, acc=2)
+    derCl_As = d_dAs(CLs)
+
+    derCl_As_interpTT = interp1d(cosmo.ell, derCl_As[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minAs[1])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusAs[1])
+    cl_centre = splev(cosmo.ell, cosmo.clEE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minAs2[1])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusAs2[1])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_As_EE = d_dAs(CLs)
+    derCl_As_interpEE = interp1d(cosmo.ell, derCl_As_EE[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minAs[2])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusAs[2])
+    cl_centre = splev(cosmo.ell, cosmo.clTE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minAs2[2])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusAs2[2])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+    derCl_As_TE = d_dAs(CLs)
+
+    derCl_As_interpTE = interp1d(cosmo.ell, derCl_As_TE[2], kind="cubic")
 
     return derCl_As_interpTT, derCl_As_interpEE, derCl_As_interpTE
 
 
 def compute_deriv_ns(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTT_minns)
-    cl_after = splev(cosmo.ell, cosmo.clTT_plusns)
-    deltans = fracstep * cosmo.ns
-    derCl_ns = (cl_after - cl_before) / (2.0 * deltans)
-    derCl_ns_interpTT = interp1d(cosmo.ell, derCl_ns)
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minns[0])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusns[0])
+    cl_centre = splev(cosmo.ell, cosmo.clTT)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minns2[0])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusns2[0])
 
-    cl_before = splev(cosmo.ell, cosmo.clEE_minns)
-    cl_after = splev(cosmo.ell, cosmo.clEE_plusns)
-    derCl_ns_EE = (cl_after - cl_before) / (2.0 * deltans)
-    derCl_ns_interpEE = interp1d(cosmo.ell, derCl_ns_EE)
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
 
-    cl_before = splev(cosmo.ell, cosmo.clTE_minns)
-    cl_after = splev(cosmo.ell, cosmo.clTE_plusns)
-    derCl_ns_TE = (cl_after - cl_before) / (2.0 * deltans)
-    derCl_ns_interpTE = interp1d(cosmo.ell, derCl_ns_TE)
+    d_dns = FinDiff(0, fracstep * cosmo.ns, acc=2)
+    derCl_ns = d_dns(CLs)
+
+    derCl_ns_interpTT = interp1d(cosmo.ell, derCl_ns[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minns[1])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusns[1])
+    cl_centre = splev(cosmo.ell, cosmo.clEE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minns2[1])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusns2[1])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_ns_EE = d_dns(CLs)
+
+    derCl_ns_interpEE = interp1d(cosmo.ell, derCl_ns_EE[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minns[2])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusns[2])
+    cl_centre = splev(cosmo.ell, cosmo.clTE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minns2[2])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusns2[2])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_ns_TE = d_dns(CLs)
+
+    derCl_ns_interpTE = interp1d(cosmo.ell, derCl_ns_TE[2], kind="cubic")
 
     return derCl_ns_interpTT, derCl_ns_interpEE, derCl_ns_interpTE
 
 
 def compute_deriv_tau(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTT_mintau)
-    cl_after = splev(cosmo.ell, cosmo.clTT_plustau)
-    deltatau = fracstep * cosmo.tau
-    derCl_tau = (cl_after - cl_before) / (2.0 * deltatau)
-    derCl_tau_interpTT = interp1d(cosmo.ell, derCl_tau)
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_mintau[0])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plustau[0])
+    cl_centre = splev(cosmo.ell, cosmo.clTT)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_mintau2[0])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plustau2[0])
 
-    cl_before = splev(cosmo.ell, cosmo.clEE_mintau)
-    cl_after = splev(cosmo.ell, cosmo.clEE_plustau)
-    derCl_tau_EE = (cl_after - cl_before) / (2.0 * deltatau)
-    derCl_tau_interpEE = interp1d(cosmo.ell, derCl_tau_EE)
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
 
-    cl_before = splev(cosmo.ell, cosmo.clTE_mintau)
-    cl_after = splev(cosmo.ell, cosmo.clTE_plustau)
-    derCl_tau_TE = (cl_after - cl_before) / (2.0 * deltatau)
-    derCl_tau_interpTE = interp1d(cosmo.ell, derCl_tau_TE)
+    d_dtau = FinDiff(0, fracstep * cosmo.tau, acc=2)
+    derCl_tau = d_dtau(CLs)
+
+    derCl_tau_interpTT = interp1d(cosmo.ell, derCl_tau[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_mintau[1])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plustau[1])
+    cl_centre = splev(cosmo.ell, cosmo.clEE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_mintau2[1])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plustau2[1])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_tau_EE = d_dtau(CLs)
+
+    derCl_tau_interpEE = interp1d(cosmo.ell, derCl_tau_EE[2], kind="cubic")
+
+    cl_before = splev(cosmo.ell, cosmo.clTTEETE_mintau[2])
+    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plustau[2])
+    cl_centre = splev(cosmo.ell, cosmo.clTE)
+    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_mintau2[2])
+    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plustau2[2])
+
+    CLs = np.zeros((5, len(cosmo.ell)))
+    CLs[0, :] = cl_before2
+    CLs[1, :] = cl_before
+    CLs[2, :] = cl_centre
+    CLs[3, :] = cl_after
+    CLs[4, :] = cl_after2
+
+    derCl_tau_TE = d_dtau(CLs)
+
+    derCl_tau_interpTE = interp1d(cosmo.ell, derCl_tau_TE[2], kind="cubic")
 
     return derCl_tau_interpTT, derCl_tau_interpEE, derCl_tau_interpTE
 
 
-def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.01):
-    clTT = splev(cosmo.ell, cosmo.clTT)
-    clEE = splev(cosmo.ell, cosmo.clEE)
-    clTE = splev(cosmo.ell, cosmo.clTE)
-    derClTT = FinDiff(0, dl, acc=4)(clTT)
-    derClEE = FinDiff(0, dl, acc=4)(clEE)
-    derClTE = FinDiff(0, dl, acc=4)(clTE)
-
+def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.05):
     order = 4
     ClarrayTT = np.empty((2 * order + 1, len(cosmo.ell)))
     ClarrayEE = np.empty((2 * order + 1, len(cosmo.ell)))
@@ -174,9 +374,9 @@ def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.01):
 
     for i in range(-order, order + 1):
         linterp = cosmo.ell + i * dl
-        ClarrayTT[i + order] = splev(linterp, cosmo.clTT)
-        ClarrayEE[i + order] = splev(linterp, cosmo.clEE)
-        ClarrayTE[i + order] = splev(linterp, cosmo.clTE)
+        ClarrayTT[i + order] = splev(linterp, cosmo.clTT, ext=1)
+        ClarrayEE[i + order] = splev(linterp, cosmo.clEE, ext=1)
+        ClarrayTE[i + order] = splev(linterp, cosmo.clTE, ext=1)
 
     derClTT = FinDiff(0, dl, acc=4)(ClarrayTT)[order]
     derClEE = FinDiff(0, dl, acc=4)(ClarrayEE)[order]
@@ -187,9 +387,9 @@ def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.01):
     derClTT_A = derClTT * dl_dA
     derClEE_A = derClEE * dl_dA
     derClTE_A = derClTE * dl_dA
-    derClTT_A = interp1d(cosmo.ell, derClTT_A)
-    derClEE_A = interp1d(cosmo.ell, derClEE_A)
-    derClTE_A = interp1d(cosmo.ell, derClTE_A)
+    derClTT_A = interp1d(cosmo.ell, derClTT_A, kind="cubic")
+    derClEE_A = interp1d(cosmo.ell, derClEE_A, kind="cubic")
+    derClTE_A = interp1d(cosmo.ell, derClTE_A, kind="cubic")
     return derClTT_A, derClEE_A, derClTE_A
 
 
@@ -362,10 +562,23 @@ def CastNet(
         if lval < cosmo.lminTE or lval > cosmo.lmaxTE:
             derCl[:, 2] = 0.0
 
-        covCl, covCl_inv = compute_inv_cov(
+        covCl = compute_cov(
             np.array([splev(lval, Cl_arr[j]) for j in range(len(Cl_arr))]),
             lval,
         )
+        covCl_inv = np.linalg.inv(covCl)
+
+        if not cosmo.use_TE and not cosmo.use_EE:
+            covCl = covCl[:1, :1]
+            covCl_inv = np.linalg.inv(covCl)
+
+        elif not cosmo.use_TE:
+            covCl = covCl[:2, :2]
+            covCl_inv = np.linalg.inv(covCl)
+
+        elif not cosmo.use_EE:
+            covCl = covCl[[0, 2], :][:, [0, 2]]
+            covCl_inv = np.linalg.inv(covCl)
 
         for theta1 in range(derCl.shape[0]):
             for theta2 in range(derCl.shape[0]):
@@ -375,6 +588,7 @@ def CastNet(
                 indices = [0, 1, 2]
                 if not cosmo.use_TE and not cosmo.use_EE:
                     indices = [0]
+                    covCl = covCl[:1, :1]
                 elif not cosmo.use_EE:
                     indices.remove(1)
                 elif not cosmo.use_TE:
@@ -395,7 +609,7 @@ def CastNet(
     return Shoal
 
 
-def compute_inv_cov(cosmoClval: npt.NDArray, lval: float):
+def compute_cov(cosmoClval: npt.NDArray, lval: float):
     """Computes the covariance matrix of the auto and cross-power spectra for a given
         ell, as well as its inverse.
 
@@ -445,12 +659,14 @@ def compute_inv_cov(cosmoClval: npt.NDArray, lval: float):
                 [
                     (Nl_DeltaT + cosmoClval[0]) * cosmoClval[1],
                     (Nl_DeltaE + cosmoClval[2]) * cosmoClval[1],
-                    0.5 * (cosmoClval[1] ** 2 + cosmoClval[2] * cosmoClval[0]),
+                    0.5
+                    * (
+                        cosmoClval[1] ** 2
+                        + (Nl_DeltaT + cosmoClval[0]) * (Nl_DeltaE + cosmoClval[2])
+                    ),
                 ]
             ),
         )
     )
 
-    cov_inv = np.linalg.inv(covariance)
-
-    return covariance, cov_inv
+    return covariance

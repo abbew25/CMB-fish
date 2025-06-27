@@ -32,89 +32,119 @@ class CosmoResults:
             self.area,
         ) = self.run_camb(pardict)
 
+        # for derivatives w.r.t. thetastar
         pardictbefore = copy.deepcopy(pardict)
         pardictafter = copy.deepcopy(pardict)
         pardictbefore["thetastar"] = self.theta_star * (1.0 - fracstepthetastar) / 100.0
         del pardictbefore["h"]
         pardictafter["thetastar"] = self.theta_star * (1.0 + fracstepthetastar) / 100.0
         del pardictafter["h"]
+        minus_thstar = self.run_camb(pardictbefore)
+        plus_thstar = self.run_camb(pardictafter)
+        self.clTTEETE_minthetastar = minus_thstar[1:4]
+        self.clTTEETE_plusthetastar = plus_thstar[1:4]
 
-        self.minus_thstar = self.run_camb(pardictbefore)
-        self.clTT_minthetastar = self.minus_thstar[1]
-        self.clEE_minthetastar = self.minus_thstar[2]
-        self.clTE_minthetastar = self.minus_thstar[3]
+        pardictbefore["thetastar"] = (
+            self.theta_star * (1.0 - 2.0 * fracstepthetastar) / 100.0
+        )
+        pardictafter["thetastar"] = (
+            self.theta_star * (1.0 + 2.0 * fracstepthetastar) / 100.0
+        )
+        minus_thstar = self.run_camb(pardictbefore)
+        plus_thstar = self.run_camb(pardictafter)
+        self.clTTEETE_minthetastar2 = minus_thstar[1:4]
+        self.clTTEETE_plusthetastar2 = plus_thstar[1:4]
 
-        self.plus_thstar = self.run_camb(pardictafter)
-        self.clTT_plusthetastar = self.plus_thstar[1]
-        self.clEE_plusthetastar = self.plus_thstar[2]
-        self.clTE_plusthetastar = self.plus_thstar[3]
-
+        # for derivatives w.r.t. Omegab
         pardictbefore = copy.deepcopy(pardict)
         pardictafter = copy.deepcopy(pardict)
         pardictbefore["omega_b"] = self.Omegab * (1.0 - fracstepomegab)
         pardictafter["omega_b"] = self.Omegab * (1.0 + fracstepomegab)
+        minus_Omegab = self.run_camb(pardictbefore)
+        self.clTTEETE_minOmegab = minus_Omegab[1:4]
+        plus_Omegab = self.run_camb(pardictafter)
+        self.clTTEETE_plusOmegab = plus_Omegab[1:4]
 
-        self.minus_Omegab = self.run_camb(pardictbefore)
-        self.clTT_minOmegab = self.minus_Omegab[1]
-        self.clEE_minOmegab = self.minus_Omegab[2]
-        self.clTE_minOmegab = self.minus_Omegab[3]
-        self.plus_Omegab = self.run_camb(pardictafter)
-        self.clTT_plusOmegab = self.plus_Omegab[1]
-        self.clEE_plusOmegab = self.plus_Omegab[2]
-        self.clTE_plusOmegab = self.plus_Omegab[3]
+        pardictbefore["omega_b"] = self.Omegab * (1.0 - 2.0 * fracstepomegab)
+        pardictafter["omega_b"] = self.Omegab * (1.0 + 2.0 * fracstepomegab)
+        minus_Omegab = self.run_camb(pardictbefore)
+        self.clTTEETE_minOmegab2 = minus_Omegab[1:4]
+        plus_Omegab = self.run_camb(pardictafter)
+        self.clTTEETE_plusOmegab2 = plus_Omegab[1:4]
 
+        # for derivatives w.r.t. Omega_cdm
         pardictbefore = copy.deepcopy(pardict)
         pardictafter = copy.deepcopy(pardict)
         pardictbefore["omega_cdm"] = self.Omega_cdm * (1.0 - fracstepomegacdm)
         pardictafter["omega_cdm"] = self.Omega_cdm * (1.0 + fracstepomegacdm)
+        minus_Omegacdm = self.run_camb(pardictbefore)
+        self.clTTEETE_minOmegacdm = minus_Omegacdm[1:4]
+        plus_Omegacdm = self.run_camb(pardictafter)
+        self.clTTEETE_plusOmegacdm = plus_Omegacdm[1:4]
 
-        self.minus_Omegacdm = self.run_camb(pardictbefore)
-        self.clTT_minOmegacdm = self.minus_Omegacdm[1]
-        self.clEE_minOmegacdm = self.minus_Omegacdm[2]
-        self.clTE_minOmegacdm = self.minus_Omegacdm[3]
-        self.plus_Omegacdm = self.run_camb(pardictafter)
-        self.clTT_plusOmegacdm = self.plus_Omegacdm[1]
-        self.clEE_plusOmegacdm = self.plus_Omegacdm[2]
-        self.clTE_plusOmegacdm = self.plus_Omegacdm[3]
+        pardictbefore["omega_cdm"] = self.Omega_cdm * (1.0 - 2.0 * fracstepomegacdm)
+        pardictafter["omega_cdm"] = self.Omega_cdm * (1.0 + 2.0 * fracstepomegacdm)
+        minus_Omegacdm = self.run_camb(pardictbefore)
+        self.clTTEETE_minOmegacdm2 = minus_Omegacdm[1:4]
+        plus_Omegacdm = self.run_camb(pardictafter)
+        self.clTTEETE_plusOmegacdm2 = plus_Omegacdm[1:4]
 
+        # for derivatives w.r.t. A_s
         pardictbefore = copy.deepcopy(pardict)
         pardictafter = copy.deepcopy(pardict)
+        del pardictbefore["ln10^{10}A_s"]
+        del pardictafter["ln10^{10}A_s"]
         pardictbefore["A_s"] = np.exp(self.lnAs10) * (1.0 - fracstepAs) * 1.0e-10
         pardictafter["A_s"] = np.exp(self.lnAs10) * (1.0 + fracstepAs) * 1.0e-10
-        self.minus_As = self.run_camb(pardictbefore)
-        self.clTT_minAs = self.minus_As[1]
-        self.clEE_minAs = self.minus_As[2]
-        self.clTE_minAs = self.minus_As[3]
-        self.plus_As = self.run_camb(pardictafter)
-        self.clTT_plusAs = self.plus_As[1]
-        self.clEE_plusAs = self.plus_As[2]
-        self.clTE_plusAs = self.plus_As[3]
+        minus_As = self.run_camb(pardictbefore)
+        self.clTTEETE_minAs = minus_As[1:4]
+        plus_As = self.run_camb(pardictafter)
+        self.clTTEETE_plusAs = plus_As[1:4]
 
+        pardictbefore["A_s"] = np.exp(self.lnAs10) * (1.0 - 2.0 * fracstepAs) * 1.0e-10
+        pardictafter["A_s"] = np.exp(self.lnAs10) * (1.0 + 2.0 * fracstepAs) * 1.0e-10
+        minus_As = self.run_camb(pardictbefore)
+        self.clTTEETE_minAs2 = minus_As[1:4]
+        plus_As = self.run_camb(pardictafter)
+        self.clTTEETE_plusAs2 = plus_As[1:4]
+
+        # for derivatives w.r.t. n_s
         pardictbefore = copy.deepcopy(pardict)
         pardictafter = copy.deepcopy(pardict)
         pardictbefore["n_s"] = self.ns * (1.0 - fracstepns)
         pardictafter["n_s"] = self.ns * (1.0 + fracstepns)
-        self.minus_ns = self.run_camb(pardictbefore)
-        self.clTT_minns = self.minus_ns[1]
-        self.clEE_minns = self.minus_ns[2]
-        self.clTE_minns = self.minus_ns[3]
-        self.plus_ns = self.run_camb(pardictafter)
-        self.clTT_plusns = self.plus_ns[1]
-        self.clEE_plusns = self.plus_ns[2]
-        self.clTE_plusns = self.plus_ns[3]
+        minus_ns = self.run_camb(pardictbefore)
+        self.clTTEETE_minns = minus_ns[1:4]
+        plus_ns = self.run_camb(pardictafter)
+        self.clTTEETE_plusns = plus_ns[1:4]
 
+        pardictbefore["n_s"] = self.ns * (1.0 - 2.0 * fracstepns)
+        pardictafter["n_s"] = self.ns * (1.0 + 2.0 * fracstepns)
+        minus_ns = self.run_camb(pardictbefore)
+        self.clTTEETE_minns2 = minus_ns[1:4]
+        plus_ns = self.run_camb(pardictafter)
+        self.clTTEETE_plusns2 = plus_ns[1:4]
+
+        # for derivatives w.r.t. tau_reio
         pardictbefore = copy.deepcopy(pardict)
         pardictafter = copy.deepcopy(pardict)
         pardictbefore["tau_reio"] = float(pardict["tau_reio"]) * (1.0 - fracsteptau)
         pardictafter["tau_reio"] = float(pardict["tau_reio"]) * (1.0 + fracsteptau)
-        self.minus_tau = self.run_camb(pardictbefore)
-        self.clTT_mintau = self.minus_tau[1]
-        self.clEE_mintau = self.minus_tau[2]
-        self.clTE_mintau = self.minus_tau[3]
-        self.plus_tau = self.run_camb(pardictafter)
-        self.clTT_plustau = self.plus_tau[1]
-        self.clEE_plustau = self.plus_tau[2]
-        self.clTE_plustau = self.plus_tau[3]
+        minus_tau = self.run_camb(pardictbefore)
+        self.clTTEETE_mintau = minus_tau[1:4]
+        plus_tau = self.run_camb(pardictafter)
+        self.clTTEETE_plustau = plus_tau[1:4]
+
+        pardictbefore["tau_reio"] = float(pardict["tau_reio"]) * (
+            1.0 - 2.0 * fracsteptau
+        )
+        pardictafter["tau_reio"] = float(pardict["tau_reio"]) * (
+            1.0 + 2.0 * fracsteptau
+        )
+        minus_tau = self.run_camb(pardictbefore)
+        self.clTTEETE_mintau2 = minus_tau[1:4]
+        plus_tau = self.run_camb(pardictafter)
+        self.clTTEETE_plustau2 = plus_tau[1:4]
 
         self.lminTT = int(pardict["lminTT"])
         self.lmaxTT = int(pardict["lmaxTT"])

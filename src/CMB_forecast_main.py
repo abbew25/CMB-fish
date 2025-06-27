@@ -18,12 +18,19 @@ if __name__ == "__main__":
     if "geff_fixed" not in pardict:
         pardict["geff_fixed"] = True
 
-    fracstepthetastar = 0.02
-    fracstepomegab = 0.02
-    fracstepomegacdm = 0.02
-    fracstepAs = 0.02
-    fracstepns = 0.02
-    fracsteptau = 0.02
+    # fracstepthetastar = 0.0001  # good
+    # fracstepomegab = 0.0005
+    # fracstepomegacdm = 0.0001
+    # fracstepAs = 0.0001  # good
+    # fracstepns = 0.00001  # good
+    # fracsteptau = 0.0001  # good
+
+    fracstepthetastar = 0.001
+    fracstepomegab = 0.001
+    fracstepomegacdm = 0.001
+    fracstepAs = 0.001
+    fracstepns = 0.0005
+    fracsteptau = 0.0001
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -122,16 +129,25 @@ if __name__ == "__main__":
     # Catch[-1][-1] += 1.0 / (0.01**2)
 
     # cov = np.linalg.inv(Catch)
-    # print(np.linalg.cond(Catch))
+    # console.log('matrix condition number: ', np.linalg.cond(Catch))
+
+    # import copy
+    # Catch2 = copy.deepcopy(Catch)
+    # Catch2 = np.delete(Catch2, 1, axis=0)
+    # Catch2 = np.delete(Catch2, 1, axis=1)
+
+    # console.log('matrix condition number without A_phi: ', np.linalg.cond(Catch2))
+
+    # exit()
 
     # import matplotlib.pyplot as plt
     # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
     # plt.colorbar()
     # plt.show()
 
-    # Catch = np.delete(Catch, 1, axis=0)
-    # Catch = np.delete(Catch, 1, axis=1)
-
+    Catch = np.delete(Catch, 1, axis=0)  # remove A_phi
+    Catch = np.delete(Catch, 1, axis=1)
+    # print(Catch)
     # for i in range(len(Catch)):
     #     for j in range(len(Catch)):
     #         if i < j:
@@ -147,8 +163,8 @@ if __name__ == "__main__":
     means = np.array(
         [
             cosmo.theta_star,
-            cosmo.A_phi,
-            cosmo.Omegab * 100.0,
+            # cosmo.A_phi,
+            cosmo.Omegab,
             cosmo.Omega_cdm,
             cosmo.lnAs10,
             cosmo.ns,
@@ -160,8 +176,8 @@ if __name__ == "__main__":
         means = np.array(
             [
                 cosmo.theta_star,
-                cosmo.A_phi,
-                cosmo.Omegab * 100.0,
+                # cosmo.A_phi,
+                cosmo.Omegab,
                 cosmo.Omega_cdm,
                 cosmo.lnAs10,
                 cosmo.ns,
@@ -170,8 +186,8 @@ if __name__ == "__main__":
         )
 
     if not pardict.as_bool("geff_fixed"):
-        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
-            # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+        # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
             errs[0] / means[0] * 100.0,
             means[1],
@@ -186,12 +202,12 @@ if __name__ == "__main__":
             errs[5] / means[5] * 100.0,
             means[6],
             errs[6] / means[6] * 100.0,
-            means[7],
-            errs[7] / means[7] * 100.0,
+            # means[7],
+            # errs[7] / means[7] * 100.0,
         )
     else:
-        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
-            # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+        # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
             errs[0] / means[0] * 100.0,
             means[1],
@@ -204,8 +220,8 @@ if __name__ == "__main__":
             errs[4] / means[4] * 100.0,
             means[5],
             errs[5] / means[5] * 100.0,
-            means[6],
-            errs[6] / means[6] * 100.0,
+            # means[6],
+            # errs[6] / means[6] * 100.0,
         )
 
     console.log(txt)
@@ -216,6 +232,8 @@ if __name__ == "__main__":
         cov,
         means,
     )
+
+    exit()
 
     # Catch_standard = copy.deepcopy(Catch)
     # Catch_standard = np.delete(Catch_standard, 1, axis=0)
@@ -270,7 +288,7 @@ if __name__ == "__main__":
                 cov,
                 columns=[
                     r"$100\theta_*$",
-                    r"$A_{\phi}$",
+                    # r"$A_{\phi}$",
                     r"$100\Omega_bh^2$",
                     r"$\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
@@ -296,7 +314,7 @@ if __name__ == "__main__":
                 cov,
                 columns=[
                     r"$100\theta_*$",
-                    r"$A_{\phi}$",
+                    # r"$A_{\phi}$",
                     r"$100\Omega_b$h^2",
                     r"$\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
