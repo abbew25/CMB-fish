@@ -227,15 +227,15 @@ class CosmoResults:
         #     minkh=2.0e-5, maxkh=10.0, npoints=2000
         # )
 
-        ll = np.arange(2, 5001)
+        ll = np.arange(1, 5001)
 
         CMBdat = results.get_cmb_power_spectra(
             pars, CMB_unit="muK", lmax=5000, raw_cl=True
         )["total"]
 
-        clTT = np.array(CMBdat[:, 0][2:])
-        clEE = np.array(CMBdat[:, 1][2:])
-        clTE = np.array(CMBdat[:, 3][2:])
+        clTT = np.array(CMBdat[:, 0][1:])
+        clEE = np.array(CMBdat[:, 1][1:])
+        clTE = np.array(CMBdat[:, 3][1:])
 
         # import matplotlib.pyplot as plt
         # f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 15))

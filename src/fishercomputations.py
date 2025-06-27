@@ -17,13 +17,73 @@ def Set_Bait(
     fracstepns: float = 0.002,
     fracsteptau: float = 0.002,
 ):
-    derClthetastar = compute_deriv_thetastar(cosmo, fracstep=fracstepthetastar)
+    derClthetastar = compute_deriv(
+        cosmo,
+        cosmo.theta_star,
+        [
+            cosmo.clTTEETE_minthetastar2,
+            cosmo.clTTEETE_minthetastar,
+            cosmo.clTTEETE_plusthetastar,
+            cosmo.clTTEETE_plusthetastar2,
+        ],
+        fracstep=fracstepthetastar,
+    )
     derClAphi = compute_deriv_phiamplitude(cosmo)
-    derClOmegab = compute_deriv_omegab(cosmo, fracstep=fracstepomegab)
-    derClOmegacdm = compute_deriv_omegacdm(cosmo, fracstep=fracstepomegacdm)
-    derClAs = compute_deriv_As(cosmo, fracstep=fracstepAs)
-    derClns = compute_deriv_ns(cosmo, fracstep=fracstepns)
-    derCltau = compute_deriv_tau(cosmo, fracstep=fracsteptau)
+    derClOmegab = compute_deriv(
+        cosmo,
+        cosmo.Omegab * 100.0,
+        [
+            cosmo.clTTEETE_minOmegab2,
+            cosmo.clTTEETE_minOmegab,
+            cosmo.clTTEETE_plusOmegab,
+            cosmo.clTTEETE_plusOmegab2,
+        ],
+        fracstep=fracstepomegab,
+    )
+    derClOmegacdm = compute_deriv(
+        cosmo,
+        cosmo.Omega_cdm,
+        [
+            cosmo.clTTEETE_minOmegacdm2,
+            cosmo.clTTEETE_minOmegacdm,
+            cosmo.clTTEETE_plusOmegacdm,
+            cosmo.clTTEETE_plusOmegacdm2,
+        ],
+        fracstep=fracstepomegacdm,
+    )
+    derClAs = compute_deriv(
+        cosmo,
+        cosmo.lnAs10,
+        [
+            cosmo.clTTEETE_minAs2,
+            cosmo.clTTEETE_minAs,
+            cosmo.clTTEETE_plusAs,
+            cosmo.clTTEETE_plusAs2,
+        ],
+        fracstep=fracstepAs,
+    )
+    derClns = compute_deriv(
+        cosmo,
+        cosmo.ns,
+        [
+            cosmo.clTTEETE_minns2,
+            cosmo.clTTEETE_minns,
+            cosmo.clTTEETE_plusns,
+            cosmo.clTTEETE_plusns2,
+        ],
+        fracstep=fracstepns,
+    )
+    derCltau = compute_deriv(
+        cosmo,
+        cosmo.tau,
+        [
+            cosmo.clTTEETE_mintau2,
+            cosmo.clTTEETE_mintau,
+            cosmo.clTTEETE_plustau,
+            cosmo.clTTEETE_plustau2,
+        ],
+        fracstep=fracsteptau,
+    )
 
     if geff_fixed:
         return (
@@ -39,338 +99,40 @@ def Set_Bait(
         return None
 
 
-def compute_deriv_thetastar(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minthetastar[0])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar[0])
-    cl_centre = splev(cosmo.ell, cosmo.clTT)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minthetastar2[0])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar2[0])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    d_dthetastar = FinDiff(0, fracstep * cosmo.theta_star, acc=2)
-    derCl_thetastar = d_dthetastar(CLs)
-
-    derCl_thetastar_interpTT = interp1d(cosmo.ell, derCl_thetastar[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minthetastar[1])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar[1])
-    cl_centre = splev(cosmo.ell, cosmo.clEE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minthetastar2[1])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar2[1])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0] = cl_before2
-    CLs[1] = cl_before
-    CLs[2] = cl_centre
-    CLs[3] = cl_after
-    CLs[4] = cl_after2
-
-    derCl_thetastar_EE = d_dthetastar(CLs)
-    derCl_thetastar_interpEE = interp1d(cosmo.ell, derCl_thetastar_EE[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minthetastar[2])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar[2])
-    cl_centre = splev(cosmo.ell, cosmo.clTE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minthetastar2[2])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusthetastar2[2])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0] = cl_before2
-    CLs[1] = cl_before
-    CLs[2] = cl_centre
-    CLs[3] = cl_after
-    CLs[4] = cl_after2
-
-    derCl_thetastar_TE = d_dthetastar(CLs)
-    derCl_thetastar_interpTE = interp1d(cosmo.ell, derCl_thetastar_TE[2], kind="cubic")
-
-    return derCl_thetastar_interpTT, derCl_thetastar_interpEE, derCl_thetastar_interpTE
-
-
-def compute_deriv_omegab(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegab[0])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab[0])
-    cl_centre = splev(cosmo.ell, cosmo.clTT)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegab2[0])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab2[0])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    d_domegab = FinDiff(0, fracstep * cosmo.Omegab, acc=2)
-    derCl_omegab = d_domegab(CLs)
-
-    derCl_omegab_interpTT = interp1d(cosmo.ell, derCl_omegab[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegab[1])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab[1])
-    cl_centre = splev(cosmo.ell, cosmo.clEE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegab2[1])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab2[1])
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_omegab_EE = d_domegab(CLs)
-    derCl_omegab_interpEE = interp1d(cosmo.ell, derCl_omegab_EE[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegab[2])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab[2])
-    cl_centre = splev(cosmo.ell, cosmo.clTE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegab2[2])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegab2[2])
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_omegab_TE = d_domegab(CLs)
-    derCl_omegab_interpTE = interp1d(cosmo.ell, derCl_omegab_TE[2], kind="cubic")
-
-    return derCl_omegab_interpTT, derCl_omegab_interpEE, derCl_omegab_interpTE
-
-
-def compute_deriv_omegacdm(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm[0])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm[0])
-    cl_centre = splev(cosmo.ell, cosmo.clTT)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm2[0])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm2[0])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    d_domegacdm = FinDiff(0, fracstep * cosmo.Omega_cdm, acc=2)
-    derCl_omegacdm = d_domegacdm(CLs)
-
-    derCl_omegacdm_interpTT = interp1d(cosmo.ell, derCl_omegacdm[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm[1])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm[1])
-    cl_centre = splev(cosmo.ell, cosmo.clEE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm2[1])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm2[1])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_omegacdm_EE = d_domegacdm(CLs)
-    derCl_omegacdm_interpEE = interp1d(cosmo.ell, derCl_omegacdm_EE[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm[2])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm[2])
-    cl_centre = splev(cosmo.ell, cosmo.clTE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minOmegacdm2[2])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusOmegacdm2[2])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_omegacdm_TE = d_domegacdm(CLs)
-
-    derCl_omegacdm_interpTE = interp1d(cosmo.ell, derCl_omegacdm_TE[2], kind="cubic")
-
-    return derCl_omegacdm_interpTT, derCl_omegacdm_interpEE, derCl_omegacdm_interpTE
-
-
-def compute_deriv_As(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minAs[0])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusAs[0])
-    cl_centre = splev(cosmo.ell, cosmo.clTT)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minAs2[0])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusAs2[0])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    d_dAs = FinDiff(0, fracstep * cosmo.lnAs10, acc=2)
-    derCl_As = d_dAs(CLs)
-
-    derCl_As_interpTT = interp1d(cosmo.ell, derCl_As[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minAs[1])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusAs[1])
-    cl_centre = splev(cosmo.ell, cosmo.clEE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minAs2[1])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusAs2[1])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_As_EE = d_dAs(CLs)
-    derCl_As_interpEE = interp1d(cosmo.ell, derCl_As_EE[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minAs[2])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusAs[2])
-    cl_centre = splev(cosmo.ell, cosmo.clTE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minAs2[2])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusAs2[2])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-    derCl_As_TE = d_dAs(CLs)
-
-    derCl_As_interpTE = interp1d(cosmo.ell, derCl_As_TE[2], kind="cubic")
-
-    return derCl_As_interpTT, derCl_As_interpEE, derCl_As_interpTE
-
-
-def compute_deriv_ns(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minns[0])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusns[0])
-    cl_centre = splev(cosmo.ell, cosmo.clTT)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minns2[0])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusns2[0])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    d_dns = FinDiff(0, fracstep * cosmo.ns, acc=2)
-    derCl_ns = d_dns(CLs)
-
-    derCl_ns_interpTT = interp1d(cosmo.ell, derCl_ns[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minns[1])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusns[1])
-    cl_centre = splev(cosmo.ell, cosmo.clEE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minns2[1])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusns2[1])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_ns_EE = d_dns(CLs)
-
-    derCl_ns_interpEE = interp1d(cosmo.ell, derCl_ns_EE[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_minns[2])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plusns[2])
-    cl_centre = splev(cosmo.ell, cosmo.clTE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_minns2[2])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plusns2[2])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_ns_TE = d_dns(CLs)
-
-    derCl_ns_interpTE = interp1d(cosmo.ell, derCl_ns_TE[2], kind="cubic")
-
-    return derCl_ns_interpTT, derCl_ns_interpEE, derCl_ns_interpTE
-
-
-def compute_deriv_tau(cosmo: CosmoResults, fracstep: float = 0.002):
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_mintau[0])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plustau[0])
-    cl_centre = splev(cosmo.ell, cosmo.clTT)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_mintau2[0])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plustau2[0])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    d_dtau = FinDiff(0, fracstep * cosmo.tau, acc=2)
-    derCl_tau = d_dtau(CLs)
-
-    derCl_tau_interpTT = interp1d(cosmo.ell, derCl_tau[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_mintau[1])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plustau[1])
-    cl_centre = splev(cosmo.ell, cosmo.clEE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_mintau2[1])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plustau2[1])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_tau_EE = d_dtau(CLs)
-
-    derCl_tau_interpEE = interp1d(cosmo.ell, derCl_tau_EE[2], kind="cubic")
-
-    cl_before = splev(cosmo.ell, cosmo.clTTEETE_mintau[2])
-    cl_after = splev(cosmo.ell, cosmo.clTTEETE_plustau[2])
-    cl_centre = splev(cosmo.ell, cosmo.clTE)
-    cl_before2 = splev(cosmo.ell, cosmo.clTTEETE_mintau2[2])
-    cl_after2 = splev(cosmo.ell, cosmo.clTTEETE_plustau2[2])
-
-    CLs = np.zeros((5, len(cosmo.ell)))
-    CLs[0, :] = cl_before2
-    CLs[1, :] = cl_before
-    CLs[2, :] = cl_centre
-    CLs[3, :] = cl_after
-    CLs[4, :] = cl_after2
-
-    derCl_tau_TE = d_dtau(CLs)
-
-    derCl_tau_interpTE = interp1d(cosmo.ell, derCl_tau_TE[2], kind="cubic")
-
-    return derCl_tau_interpTT, derCl_tau_interpEE, derCl_tau_interpTE
+def compute_deriv(
+    cosmo: CosmoResults, paramcentre: float, spectra: list, fracstep: float = 0.002
+):
+    centre = [
+        splev(cosmo.ell, cosmo.clTT),
+        splev(cosmo.ell, cosmo.clEE),
+        splev(cosmo.ell, cosmo.clTE),
+    ]
+
+    d_dthetastar = FinDiff(0, fracstep * paramcentre, acc=2)
+
+    s1, s2, s3, s4 = spectra
+
+    derivs = []
+
+    for i in range(3):
+        CLs = np.zeros((5, len(cosmo.ell)))
+        CLs[0, :] = splev(cosmo.ell, s1[i])
+        CLs[1, :] = splev(cosmo.ell, s2[i])
+        CLs[2, :] = centre[i]
+        CLs[3, :] = splev(cosmo.ell, s3[i])
+        CLs[4, :] = splev(cosmo.ell, s4[i])
+
+        derCl_thetastar = d_dthetastar(CLs)
+        derivs.append(interp1d(cosmo.ell, derCl_thetastar[2], kind="cubic"))
+
+    return derivs[0], derivs[1], derivs[2]
 
 
 def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.05):
     order = 4
-    ClarrayTT = np.empty((2 * order + 1, len(cosmo.ell)))
-    ClarrayEE = np.empty((2 * order + 1, len(cosmo.ell)))
-    ClarrayTE = np.empty((2 * order + 1, len(cosmo.ell)))
+    ClarrayTT = np.zeros((2 * order + 1, len(cosmo.ell)))
+    ClarrayEE = np.zeros((2 * order + 1, len(cosmo.ell)))
+    ClarrayTE = np.zeros((2 * order + 1, len(cosmo.ell)))
 
     for i in range(-order, order + 1):
         linterp = cosmo.ell + i * dl
@@ -507,28 +269,9 @@ def CastNet(
         An array containing the Fisher information for each parameter of interest.
     """
 
-    Shoal = np.empty((8, 8, len(ll)))
+    Shoal = np.zeros((8, 8, len(ll)))
     if geff_fixed:
-        Shoal = np.empty((7, 7, len(ll)))
-
-    derClAval = np.array([derClA[0](ll), derClA[1](ll), derClA[2](ll)])
-    derClgeffval = (
-        np.array([derClgeff[0](ll), derClgeff[1](ll), derClgeff[2](ll)])
-        if not geff_fixed
-        else np.array([])
-    )
-    derClthetastarval = np.array(
-        [derClthetastar[0](ll), derClthetastar[1](ll), derClthetastar[2](ll)]
-    )
-    derClOmegabval = np.array(
-        [derClOmegab[0](ll), derClOmegab[1](ll), derClOmegab[2](ll)]
-    )
-    derClOmegacdmval = np.array(
-        [derClOmegacdm[0](ll), derClOmegacdm[1](ll), derClOmegacdm[2](ll)]
-    )
-    derClAsval = np.array([derClAs[0](ll), derClAs[1](ll), derClAs[2](ll)])
-    derClnsval = np.array([derClns[0](ll), derClns[1](ll), derClns[2](ll)])
-    derCltauval = np.array([derCltau[0](ll), derCltau[1](ll), derCltau[2](ll)])
+        Shoal = np.zeros((7, 7, len(ll)))
 
     Cl_arr = [cosmo.clTT, cosmo.clEE, cosmo.clTE]
 
@@ -536,23 +279,19 @@ def CastNet(
     for i, lval in enumerate(ll):
         derCl = np.array(
             [
-                np.array(
-                    [derClthetastarval[j][i] for j in range(len(derClthetastarval))]
-                ),
-                np.array([derClAval[j][i] for j in range(len(derClAval))]),
-                np.array([derClOmegabval[j][i] for j in range(len(derClOmegabval))]),
-                np.array(
-                    [derClOmegacdmval[j][i] for j in range(len(derClOmegacdmval))]
-                ),
-                np.array([derClAsval[j][i] for j in range(len(derClAsval))]),
-                np.array([derClnsval[j][i] for j in range(len(derClnsval))]),
-                np.array([derCltauval[j][i] for j in range(len(derCltauval))]),
+                np.array([derClthetastar[j](lval) for j in range(len(derClthetastar))]),
+                np.array([derClA[j](lval) for j in range(len(derClA))]),
+                np.array([derClOmegab[j](lval) for j in range(len(derClOmegab))]),
+                np.array([derClOmegacdm[j](lval) for j in range(len(derClOmegacdm))]),
+                np.array([derClAs[j](lval) for j in range(len(derClAs))]),
+                np.array([derClns[j](lval) for j in range(len(derClns))]),
+                np.array([derCltau[j](lval) for j in range(len(derCltau))]),
             ]
         )
 
         if not geff_fixed:
             derCl = np.vstack(
-                (derCl, ([derClgeffval[0][i], derClgeffval[1][i], derClgeffval[2][i]]))
+                (derCl, ([derClgeff[0](lval), derClgeff[1](lval), derClgeff[2](lval)]))
             )
 
         if lval < cosmo.lminTT or lval > cosmo.lmaxTT:
@@ -566,37 +305,37 @@ def CastNet(
             np.array([splev(lval, Cl_arr[j]) for j in range(len(Cl_arr))]),
             lval,
         )
+
         covCl_inv = np.linalg.inv(covCl)
 
+        indices = 3
+        select_index = [0, 1, 2]
         if not cosmo.use_TE and not cosmo.use_EE:
             covCl = covCl[:1, :1]
             covCl_inv = np.linalg.inv(covCl)
+            indices = 1
+            select_index = [0]
 
         elif not cosmo.use_TE:
             covCl = covCl[:2, :2]
             covCl_inv = np.linalg.inv(covCl)
+            indices = 2
+            select_index = [0, 1]
 
         elif not cosmo.use_EE:
             covCl = covCl[[0, 2], :][:, [0, 2]]
             covCl_inv = np.linalg.inv(covCl)
+            indices = 2
+            select_index = [0, 2]
 
         for theta1 in range(derCl.shape[0]):
             for theta2 in range(derCl.shape[0]):
-                derCltheta1 = derCl[theta1, :]
-                derCltheta2 = derCl[theta2, :]
+                derCltheta1 = derCl[theta1, select_index]
+                derCltheta2 = derCl[theta2, select_index]
 
-                indices = [0, 1, 2]
-                if not cosmo.use_TE and not cosmo.use_EE:
-                    indices = [0]
-                    covCl = covCl[:1, :1]
-                elif not cosmo.use_EE:
-                    indices.remove(1)
-                elif not cosmo.use_TE:
-                    indices.remove(2)
-
-                for index in indices:
-                    for index2 in indices:
-                        Shoal[theta1, theta2, i] += (
+                for index in np.arange(indices):
+                    for index2 in np.arange(indices):
+                        val = (
                             (2.0 * lval + 1.0)
                             * 0.5
                             * cosmo.area
@@ -605,6 +344,8 @@ def CastNet(
                             * covCl_inv[index][index2]
                             * derCltheta2[index2]
                         )
+
+                        Shoal[theta1, theta2, i] += val
 
     return Shoal
 
@@ -668,5 +409,7 @@ def compute_cov(cosmoClval: npt.NDArray, lval: float):
             ),
         )
     )
+
+    covariance = covariance
 
     return covariance

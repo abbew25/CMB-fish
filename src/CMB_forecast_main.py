@@ -18,19 +18,12 @@ if __name__ == "__main__":
     if "geff_fixed" not in pardict:
         pardict["geff_fixed"] = True
 
-    # fracstepthetastar = 0.0001  # good
-    # fracstepomegab = 0.0005
-    # fracstepomegacdm = 0.0001
-    # fracstepAs = 0.0001  # good
-    # fracstepns = 0.00001  # good
-    # fracsteptau = 0.0001  # good
-
-    fracstepthetastar = 0.001
-    fracstepomegab = 0.001
-    fracstepomegacdm = 0.001
-    fracstepAs = 0.001
-    fracstepns = 0.0005
-    fracsteptau = 0.0001
+    fracstepthetastar = 0.005  # good
+    fracstepomegab = 0.005
+    fracstepomegacdm = 0.005
+    fracstepAs = 0.005  # good
+    fracstepns = 0.0005  # good
+    fracsteptau = 0.005  # good
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -147,6 +140,13 @@ if __name__ == "__main__":
 
     Catch = np.delete(Catch, 1, axis=0)  # remove A_phi
     Catch = np.delete(Catch, 1, axis=1)
+
+    # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
+    # plt.colorbar()
+    # plt.show()
+
+    # console.log('matrix condition number: ', np.linalg.cond(Catch))
+
     # print(Catch)
     # for i in range(len(Catch)):
     #     for j in range(len(Catch)):
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         [
             cosmo.theta_star,
             # cosmo.A_phi,
-            cosmo.Omegab,
+            cosmo.Omegab * 100.0,
             cosmo.Omega_cdm,
             cosmo.lnAs10,
             cosmo.ns,
@@ -177,7 +177,7 @@ if __name__ == "__main__":
             [
                 cosmo.theta_star,
                 # cosmo.A_phi,
-                cosmo.Omegab,
+                cosmo.Omegab * 100.0,
                 cosmo.Omega_cdm,
                 cosmo.lnAs10,
                 cosmo.ns,
@@ -290,7 +290,7 @@ if __name__ == "__main__":
                     r"$100\theta_*$",
                     # r"$A_{\phi}$",
                     r"$100\Omega_bh^2$",
-                    r"$\Omega_{\mathrm{cdm}}h^2$",
+                    r"$10\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
@@ -316,7 +316,7 @@ if __name__ == "__main__":
                     r"$100\theta_*$",
                     # r"$A_{\phi}$",
                     r"$100\Omega_b$h^2",
-                    r"$\Omega_{\mathrm{cdm}}h^2$",
+                    r"$10\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
