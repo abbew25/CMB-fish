@@ -18,12 +18,12 @@ if __name__ == "__main__":
     if "geff_fixed" not in pardict:
         pardict["geff_fixed"] = True
 
-    fracstepthetastar = 0.005  # good
-    fracstepomegab = 0.005
-    fracstepomegacdm = 0.005
-    fracstepAs = 0.005  # good
-    fracstepns = 0.0005  # good
-    fracsteptau = 0.005  # good
+    fracstepthetastar = 0.001  # good
+    fracstepomegab = 0.001
+    fracstepomegacdm = 0.001
+    fracstepAs = 0.001  # good
+    fracstepns = 0.0001  # good
+    fracsteptau = 0.001  # good
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
