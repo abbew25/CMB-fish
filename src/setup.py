@@ -32,13 +32,25 @@ class CosmoResults:
             self.area,
         ) = self.run_camb(pardict)
 
+        self.lminTT = int(pardict["lminTT"])
+        self.lmaxTT = int(pardict["lmaxTT"])
+        self.lminTE = int(pardict["lminTE"])
+        self.lmaxTE = int(pardict["lmaxTE"])
+        self.lminEE = int(pardict["lminEE"])
+        self.lmaxEE = int(pardict["lmaxEE"])
+        self.use_TE = True if pardict["use_TE"] == "True" else False
+        self.use_EE = True if pardict["use_EE"] == "True" else False
+        self.noise_Planck = True if pardict["noise_Planck"] == "True" else False
+
         # for derivatives w.r.t. thetastar
         pardictbefore = copy.deepcopy(pardict)
         pardictafter = copy.deepcopy(pardict)
         pardictbefore["thetastar"] = self.theta_star * (1.0 - fracstepthetastar) / 100.0
-        del pardictbefore["h"]
+        if "h" in pardictbefore.keys():
+            del pardictbefore["h"]
         pardictafter["thetastar"] = self.theta_star * (1.0 + fracstepthetastar) / 100.0
-        del pardictafter["h"]
+        if "h" in pardictafter.keys():
+            del pardictafter["h"]
         minus_thstar = self.run_camb(pardictbefore)
         plus_thstar = self.run_camb(pardictafter)
         self.clTTEETE_minthetastar = minus_thstar[1:4]
@@ -148,15 +160,6 @@ class CosmoResults:
         plus_tau = self.run_camb(pardictafter)
         self.clTTEETE_plustau2 = plus_tau[1:4]
 
-        self.lminTT = int(pardict["lminTT"])
-        self.lmaxTT = int(pardict["lmaxTT"])
-        self.lminTE = int(pardict["lminTE"])
-        self.lmaxTE = int(pardict["lmaxTE"])
-        self.lminEE = int(pardict["lminEE"])
-        self.lmaxEE = int(pardict["lmaxEE"])
-        self.use_TE = bool(pardict["use_TE"])
-        self.use_EE = bool(pardict["use_EE"])
-
     def run_camb(self, pardict: ConfigObj):
         """Runs an instance of CAMB given the cosmological parameters in pardict and redshift bins
 
@@ -225,6 +228,9 @@ class CosmoResults:
         results = camb.get_results(pars)
 
         ll = np.arange(1, 5001)
+
+        # print(results.get_cmb_power_spectra(
+        #     pars, CMB_unit="muK", lmax=5000, raw_cl=True))
 
         CMBdat = results.get_cmb_power_spectra(
             pars, CMB_unit="muK", lmax=5000, raw_cl=True

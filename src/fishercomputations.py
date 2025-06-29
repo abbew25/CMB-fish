@@ -1,6 +1,5 @@
 import numpy as np
 from findiff import FinDiff
-from scipy.integrate import simpson as simps
 from scipy.interpolate import splev
 from setup import CosmoResults, fitting_formula_Montefalcone2025
 import numpy.typing as npt
@@ -128,7 +127,7 @@ def compute_deriv(
     return derivs[0], derivs[1], derivs[2]
 
 
-def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.05):
+def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.1):
     order = 4
     ClarrayTT = np.zeros((2 * order + 1, len(cosmo.ell)))
     ClarrayEE = np.zeros((2 * order + 1, len(cosmo.ell)))
@@ -214,7 +213,7 @@ def Fish(
     )
 
     # 2D integration
-    ManyFish = simps(
+    ManyFish = np.sum(
         CastNet(
             lvec,
             cosmo,
@@ -228,7 +227,6 @@ def Fish(
             derClgeff,
             geff_fixed,
         ),
-        x=lvec,
         axis=2,
     )
 
@@ -304,28 +302,28 @@ def CastNet(
         covCl = compute_cov(
             np.array([splev(lval, Cl_arr[j]) for j in range(len(Cl_arr))]),
             lval,
+            noise_Planck=cosmo.noise_Planck,
         )
 
+        covCl = covCl * 2.0 * (1.0 / (2.0 * lval + 1.0))
         covCl_inv = np.linalg.inv(covCl)
 
-        indices = 3
         select_index = [0, 1, 2]
-        if not cosmo.use_TE and not cosmo.use_EE:
+        if (not cosmo.use_TE and not cosmo.use_EE) or (
+            covCl[1][1] <= 0.0 and covCl[2][2] <= 0.0
+        ):
             covCl = covCl[:1, :1]
             covCl_inv = np.linalg.inv(covCl)
-            indices = 1
             select_index = [0]
 
-        elif not cosmo.use_TE:
+        elif not cosmo.use_TE or covCl[2][2] <= 0.0:
             covCl = covCl[:2, :2]
             covCl_inv = np.linalg.inv(covCl)
-            indices = 2
             select_index = [0, 1]
 
-        elif not cosmo.use_EE:
+        elif not cosmo.use_EE or covCl[1][1] <= 0.0:
             covCl = covCl[[0, 2], :][:, [0, 2]]
             covCl_inv = np.linalg.inv(covCl)
-            indices = 2
             select_index = [0, 2]
 
         for theta1 in range(derCl.shape[0]):
@@ -333,24 +331,26 @@ def CastNet(
                 derCltheta1 = derCl[theta1, select_index]
                 derCltheta2 = derCl[theta2, select_index]
 
-                for index in np.arange(indices):
-                    for index2 in np.arange(indices):
-                        val = (
-                            (2.0 * lval + 1.0)
-                            * 0.5
-                            * cosmo.area
-                            / (4.0 * np.pi)
-                            * derCltheta1[index]
-                            * covCl_inv[index][index2]
-                            * derCltheta2[index2]
-                        )
+                val = derCltheta1 @ covCl_inv @ derCltheta2.T
 
+                if val == 0.0:
+                    continue
+
+                else:
+                    if theta1 < theta2:
                         Shoal[theta1, theta2, i] += val
+                        Shoal[theta2, theta1, i] += val
+
+                    if theta1 == theta2:
+                        Shoal[theta1, theta2, i] += val
+
+                    else:
+                        continue
 
     return Shoal
 
 
-def compute_cov(cosmoClval: npt.NDArray, lval: float):
+def compute_cov(cosmoClval: npt.NDArray, lval: float, noise_Planck: bool = True):
     """Computes the covariance matrix of the auto and cross-power spectra for a given
         ell, as well as its inverse.
 
@@ -377,8 +377,9 @@ def compute_cov(cosmoClval: npt.NDArray, lval: float):
     Nl_DeltaT = 1.0 / np.sum(Nl_freqT)
     Nl_DeltaE = 1.0 / np.sum(Nl_freqE)
 
-    # Nl_DeltaT = 0.0
-    # Nl_DeltaE = 0.0
+    if not noise_Planck:
+        Nl_DeltaT = 0.0
+        Nl_DeltaE = 0.0
 
     covariance = np.array(
         (
@@ -409,7 +410,5 @@ def compute_cov(cosmoClval: npt.NDArray, lval: float):
             ),
         )
     )
-
-    covariance = covariance
 
     return covariance

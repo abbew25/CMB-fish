@@ -90,20 +90,20 @@ if __name__ == "__main__":
     # Loop over redshifts and compute the Fisher matrix and output the 3x3 matrix
 
     if pardict.as_bool("geff_fixed"):
-        console.log(
-            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegab   Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
-        )
         # console.log(
-        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
-        # )
+        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
+        # # )
+        console.log(
+            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
+        )
 
     else:
-        console.log(
-            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegab   Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
-        )
         # console.log(
-        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
+        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
         # )
+        console.log(
+            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
+        )
 
     Catch = Fish(
         cosmo,
@@ -133,25 +133,29 @@ if __name__ == "__main__":
 
     # exit()
 
+    # exit()
+
     # import matplotlib.pyplot as plt
-    # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
-    # plt.colorbar()
-    # plt.show()
+    # # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
+    # # plt.colorbar()
+    # # plt.show()
 
-    Catch = np.delete(Catch, 1, axis=0)  # remove A_phi
-    Catch = np.delete(Catch, 1, axis=1)
+    # Catch = np.delete(Catch, 1, axis=0)  # remove A_phi
+    # Catch = np.delete(Catch, 1, axis=1)
 
-    # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
-    # plt.colorbar()
-    # plt.show()
+    # # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
+    # # plt.colorbar()
+    # # plt.show()
 
     # console.log('matrix condition number: ', np.linalg.cond(Catch))
 
+    # console.log(Catch - Catch.T)
+
+    # console.log(Catch @ np.linalg.inv(Catch) - np.eye(len(Catch)))
+
     # print(Catch)
-    # for i in range(len(Catch)):
-    #     for j in range(len(Catch)):
-    #         if i < j:
-    #             Catch[i, j] = Catch[j, i]
+    for i in range(len(Catch)):
+        console.log(Catch[i, :])
 
     # Catch[1][1] += 1.0 / (0.1**2)  # add prior on A_phi
 
@@ -160,10 +164,13 @@ if __name__ == "__main__":
     cov = np.linalg.inv(Catch)
 
     errs = np.sqrt(np.diag(cov))
+
+    print(errs)
+
     means = np.array(
         [
             cosmo.theta_star,
-            # cosmo.A_phi,
+            cosmo.A_phi,  # * 100.0,
             cosmo.Omegab * 100.0,
             cosmo.Omega_cdm,
             cosmo.lnAs10,
@@ -176,7 +183,7 @@ if __name__ == "__main__":
         means = np.array(
             [
                 cosmo.theta_star,
-                # cosmo.A_phi,
+                cosmo.A_phi,  # * 100.0,
                 cosmo.Omegab * 100.0,
                 cosmo.Omega_cdm,
                 cosmo.lnAs10,
@@ -186,8 +193,8 @@ if __name__ == "__main__":
         )
 
     if not pardict.as_bool("geff_fixed"):
-        # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
-        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+            # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
             errs[0] / means[0] * 100.0,
             means[1],
@@ -202,12 +209,12 @@ if __name__ == "__main__":
             errs[5] / means[5] * 100.0,
             means[6],
             errs[6] / means[6] * 100.0,
-            # means[7],
-            # errs[7] / means[7] * 100.0,
+            means[7],
+            errs[7] / means[7] * 100.0,
         )
     else:
-        # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
-        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+        txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
+            # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
             errs[0] / means[0] * 100.0,
             means[1],
@@ -220,8 +227,8 @@ if __name__ == "__main__":
             errs[4] / means[4] * 100.0,
             means[5],
             errs[5] / means[5] * 100.0,
-            # means[6],
-            # errs[6] / means[6] * 100.0,
+            means[6],
+            errs[6] / means[6] * 100.0,
         )
 
     console.log(txt)
@@ -233,28 +240,19 @@ if __name__ == "__main__":
         means,
     )
 
-    exit()
-
     # Catch_standard = copy.deepcopy(Catch)
     # Catch_standard = np.delete(Catch_standard, 1, axis=0)
     # Catch_standard = np.delete(Catch_standard, 1, axis=1)
 
     # print(np.sqrt(np.diag(np.linalg.inv(Catch_standard))))
 
-    # console.log(
-    #     Catch
-    # )
+    console.log(Catch)
+
+    print(Catch @ np.linalg.inv(Catch) - np.eye(len(Catch)))
 
     # import matplotlib.pyplot as plt
     # plt.imshow(Catch)
-
     # plt.show()
-
-    # for i in range(len(Catch)):
-    #     for j in range(len(Catch)):
-    #         if i < j:
-    #             print(i, j)
-    #             print(Catch[i,j] - Catch[j,i])
 
     alpha_nu = 8.0 / 7.0 * (11.0 / 4.0) ** (4.0 / 3.0)
     eps_neff1 = 1.0 / (1.0 + alpha_nu)
@@ -276,6 +274,16 @@ if __name__ == "__main__":
     console.log(f"Neff upper limit: {neffUpper:.6f}")
     console.log(f"Neff lower limit: {neffLower:.6f}")
 
+    eps1 = 1.0 / (1.0 + alpha_nu)
+    eps2 = 3.044 / (3.044 + alpha_nu)
+
+    dA_dneff = 1.0 / (3.044 + alpha_nu) / (eps1 - eps2) - (
+        3.044 / (3.044 + alpha_nu) ** 2
+    ) / (eps1 - eps2)
+    console.log("dneff /dA * sigmaA = sigmaNeff: ", abs(errs[1] / dA_dneff))
+    console.log("sigmaA: ", errs[1])
+    # exit()
+
     # make some pretty contour plots
     if pardict.as_bool("geff_fixed"):
         from chainconsumer import ChainConsumer, Chain
@@ -288,9 +296,9 @@ if __name__ == "__main__":
                 cov,
                 columns=[
                     r"$100\theta_*$",
-                    # r"$A_{\phi}$",
+                    r"$A_{\phi}$",
                     r"$100\Omega_bh^2$",
-                    r"$10\Omega_{\mathrm{cdm}}h^2$",
+                    r"$\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
@@ -314,9 +322,9 @@ if __name__ == "__main__":
                 cov,
                 columns=[
                     r"$100\theta_*$",
-                    # r"$A_{\phi}$",
+                    r"$A_{\phi}$",
                     r"$100\Omega_b$h^2",
-                    r"$10\Omega_{\mathrm{cdm}}h^2$",
+                    r"$\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
