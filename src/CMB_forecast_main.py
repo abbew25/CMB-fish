@@ -60,7 +60,7 @@ if __name__ == "__main__":
     derClAsTT, derClAsEE, derClAsTE = derivatives[4]
     derClnsTT, derClnsEE, derClnsTE = derivatives[5]
     derCltauTT, derCltauEE, derCltauTE = derivatives[6]
-    derClgeff = []
+    derClgeffTT, derClgeffEE, derClgeffTE = None, None, None
     if not pardict.as_bool("geff_fixed"):
         derClgeffTT, derClgeffEE, derClgeffTE = derivatives[7]
 
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         [derClAsTT, derClAsEE, derClAsTE],
         [derClnsTT, derClnsEE, derClnsTE],
         [derCltauTT, derCltauEE, derCltauTE],
-        derClgeff,
+        [derClgeffTT, derClgeffEE, derClgeffTE],
         pardict.as_bool("geff_fixed"),
     )
 
@@ -231,7 +231,7 @@ if __name__ == "__main__":
             means[5],
             errs[5] / means[5] * 100.0,
             means[6],
-            errs[6] / means[6] * 100.0,
+            errs[6] / abs(means[6]) * 100.0,
         )
 
     console.log(txt)

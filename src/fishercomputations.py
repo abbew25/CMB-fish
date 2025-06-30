@@ -4,6 +4,7 @@ from scipy.interpolate import splev
 from setup import CosmoResults, fitting_formula_Montefalcone2025
 import numpy.typing as npt
 from scipy.interpolate import interp1d
+from setup import derivell_geff
 
 
 def Set_Bait(
@@ -23,6 +24,7 @@ def Set_Bait(
         fracstep=fracstepthetastar,
     )
     derClAphi = compute_deriv_phiamplitude(cosmo)
+    derClgeff = compute_derive_geff(cosmo)
     derClOmegab = compute_deriv(
         cosmo,
         cosmo.Omegab * 100.0,
@@ -65,7 +67,16 @@ def Set_Bait(
             derCltau,
         )
     elif not geff_fixed:
-        return None
+        return (
+            derClAphi,
+            derClthetastar,
+            derClOmegab,
+            derClOmegacdm,
+            derClAs,
+            derClns,
+            derCltau,
+            derClgeff,
+        )
 
 
 def compute_deriv(
@@ -137,29 +148,31 @@ def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.1):
     return derClTT_A, derClEE_A, derClTE_A
 
 
-# def compute_derive_geff(cosmo: CosmoResults):
-#     from scipy.interpolate import RegularGridInterpolator
+def compute_derive_geff(cosmo: CosmoResults, dl: float = 0.1):
+    order = 6
+    ClarrayTT = np.zeros((2 * order + 1, len(cosmo.ell)))
+    ClarrayEE = np.zeros((2 * order + 1, len(cosmo.ell)))
+    ClarrayTE = np.zeros((2 * order + 1, len(cosmo.ell)))
 
-#     order = 4  # interpolating power spectrum at multiple different ks to get a precise derivative from findiff
-#     nmu = 100
-#     dk = 0.0001
-#     mu = np.linspace(0.0, 1.0, nmu)
+    for i in range(-order, order + 1):
+        linterp = cosmo.ell + i * dl
+        ClarrayTT[i + order] = splev(linterp, cosmo.clTT, ext=1)
+        ClarrayEE[i + order] = splev(linterp, cosmo.clEE, ext=1)
+        ClarrayTE[i + order] = splev(linterp, cosmo.clTE, ext=1)
 
-#     pkarray = np.empty((2 * order + 1, len(cosmo.k)))
-#     for i in range(-order, order + 1):
-#         kinterp = cosmo.k + i * dk
+    derClTT = FinDiff(0, dl, acc=6)(ClarrayTT)[order]
+    derClEE = FinDiff(0, dl, acc=6)(ClarrayEE)[order]
+    derClTE = FinDiff(0, dl, acc=6)(ClarrayTE)[order]
 
-#         pkarray[i + order] = splev(kinterp, cosmo.pk[0]) / splev(
-#             kinterp, cosmo.pksmooth[0]
-#         )
+    dll_dgeff = derivell_geff(cosmo.ell, cosmo.log10Geff, cosmo.theta_star, cosmo.A_phi)
 
-#     derPk = FinDiff(0, dk, acc=4)(pkarray)[order]
-#     dk_dgeff = derivk_geff(cosmo.k, cosmo.log10Geff, cosmo.r_d, cosmo.beta_phi)
-#     derPgeff = np.outer(
-#         derPk * dk_dgeff, np.ones(len(mu))
-#     )  # dP(k')/dgeff = dP/dk' * dk'/dgeff
-#     derPgeff_interp = [RegularGridInterpolator([cosmo.k, mu], derPgeff)]
-#     return derPgeff_interp
+    derClTT_geff = derClTT * dll_dgeff
+    derClEE_geff = derClEE * dll_dgeff
+    derClTE_geff = derClTE * dll_dgeff
+    derClTT_interp = interp1d(cosmo.ell, derClTT_geff, kind="cubic")
+    derClEE_interp = interp1d(cosmo.ell, derClEE_geff, kind="cubic")
+    derClTE_interp = interp1d(cosmo.ell, derClTE_geff, kind="cubic")
+    return derClTT_interp, derClEE_interp, derClTE_interp
 
 
 def Fish(
