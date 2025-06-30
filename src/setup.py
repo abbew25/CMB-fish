@@ -194,7 +194,7 @@ class CosmoResults:
 
         ellshift = factor * fitting_formula_interactingneutrinos(
             ll, log10Geff, theta_star
-        ) - fitting_formula_Montefalcone2025(ll)
+        ) - factor * fitting_formula_Montefalcone2025(ll)
 
         # ellshift = (A_phi) * fitting_formula_Montefalcone2025(ll)
 
@@ -362,7 +362,7 @@ def derivell_geff(ellarr: npt.NDArray, log10Geff: float, thetas: float, A: float
 
     firstterm = (
         deriv_amplitude_modulation_geff(ellarr, log10Geff, thetas)
-        * fitting_formula_interactingneutrinos(ellarr)
+        * fitting_formula_Montefalcone2025(ellarr)
         * factor
         * (exponential_damping_geff(ellarr, log10Geff, thetas))
     )  # A'(Geff) * factor * f(ell) * exp(ll thetas B(Geff))
