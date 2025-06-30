@@ -19,68 +19,38 @@ def Set_Bait(
     derClthetastar = compute_deriv(
         cosmo,
         cosmo.theta_star,
-        [
-            cosmo.clTTEETE_minthetastar2,
-            cosmo.clTTEETE_minthetastar,
-            cosmo.clTTEETE_plusthetastar,
-            cosmo.clTTEETE_plusthetastar2,
-        ],
+        cosmo.clTTEETE_variations_thetastar,
         fracstep=fracstepthetastar,
     )
     derClAphi = compute_deriv_phiamplitude(cosmo)
     derClOmegab = compute_deriv(
         cosmo,
         cosmo.Omegab * 100.0,
-        [
-            cosmo.clTTEETE_minOmegab2,
-            cosmo.clTTEETE_minOmegab,
-            cosmo.clTTEETE_plusOmegab,
-            cosmo.clTTEETE_plusOmegab2,
-        ],
+        cosmo.clTTEETE_variations_omegab,
         fracstep=fracstepomegab,
     )
     derClOmegacdm = compute_deriv(
         cosmo,
         cosmo.Omega_cdm,
-        [
-            cosmo.clTTEETE_minOmegacdm2,
-            cosmo.clTTEETE_minOmegacdm,
-            cosmo.clTTEETE_plusOmegacdm,
-            cosmo.clTTEETE_plusOmegacdm2,
-        ],
+        cosmo.clTTEETE_variations_omegacdm,
         fracstep=fracstepomegacdm,
     )
     derClAs = compute_deriv(
         cosmo,
         cosmo.lnAs10,
-        [
-            cosmo.clTTEETE_minAs2,
-            cosmo.clTTEETE_minAs,
-            cosmo.clTTEETE_plusAs,
-            cosmo.clTTEETE_plusAs2,
-        ],
+        cosmo.clTTEETE_variations_As,
         fracstep=fracstepAs,
     )
     derClns = compute_deriv(
         cosmo,
         cosmo.ns,
-        [
-            cosmo.clTTEETE_minns2,
-            cosmo.clTTEETE_minns,
-            cosmo.clTTEETE_plusns,
-            cosmo.clTTEETE_plusns2,
-        ],
+        cosmo.clTTEETE_variations_ns,
         fracstep=fracstepns,
     )
     derCltau = compute_deriv(
         cosmo,
         cosmo.tau,
-        [
-            cosmo.clTTEETE_mintau2,
-            cosmo.clTTEETE_mintau,
-            cosmo.clTTEETE_plustau,
-            cosmo.clTTEETE_plustau2,
-        ],
+        cosmo.clTTEETE_variations_tau,
         fracstep=fracsteptau,
     )
 
@@ -107,28 +77,41 @@ def compute_deriv(
         splev(cosmo.ell, cosmo.clTE),
     ]
 
-    d_dthetastar = FinDiff(0, fracstep * paramcentre, acc=2)
+    d_dthetastar = FinDiff(0, fracstep * paramcentre, acc=6)
 
-    s1, s2, s3, s4 = spectra
+    s1, s2, s3, s4, s5, s6, s7, s8 = (
+        spectra[0],
+        spectra[1],
+        spectra[2],
+        spectra[3],
+        spectra[4],
+        spectra[5],
+        spectra[6],
+        spectra[7],
+    )
 
     derivs = []
 
     for i in range(3):
-        CLs = np.zeros((5, len(cosmo.ell)))
+        CLs = np.zeros((9, len(cosmo.ell)))
         CLs[0, :] = splev(cosmo.ell, s1[i])
         CLs[1, :] = splev(cosmo.ell, s2[i])
-        CLs[2, :] = centre[i]
-        CLs[3, :] = splev(cosmo.ell, s3[i])
-        CLs[4, :] = splev(cosmo.ell, s4[i])
+        CLs[2, :] = splev(cosmo.ell, s3[i])
+        CLs[3, :] = splev(cosmo.ell, s4[i])
+        CLs[4, :] = centre[i]
+        CLs[5, :] = splev(cosmo.ell, s5[i])
+        CLs[6, :] = splev(cosmo.ell, s6[i])
+        CLs[7, :] = splev(cosmo.ell, s7[i])
+        CLs[4, :] = splev(cosmo.ell, s8[i])
 
         derCl_thetastar = d_dthetastar(CLs)
-        derivs.append(interp1d(cosmo.ell, derCl_thetastar[2], kind="cubic"))
+        derivs.append(interp1d(cosmo.ell, derCl_thetastar[4], kind="cubic"))
 
     return derivs[0], derivs[1], derivs[2]
 
 
 def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.1):
-    order = 4
+    order = 6
     ClarrayTT = np.zeros((2 * order + 1, len(cosmo.ell)))
     ClarrayEE = np.zeros((2 * order + 1, len(cosmo.ell)))
     ClarrayTE = np.zeros((2 * order + 1, len(cosmo.ell)))
@@ -139,9 +122,9 @@ def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.1):
         ClarrayEE[i + order] = splev(linterp, cosmo.clEE, ext=1)
         ClarrayTE[i + order] = splev(linterp, cosmo.clTE, ext=1)
 
-    derClTT = FinDiff(0, dl, acc=4)(ClarrayTT)[order]
-    derClEE = FinDiff(0, dl, acc=4)(ClarrayEE)[order]
-    derClTE = FinDiff(0, dl, acc=4)(ClarrayTE)[order]
+    derClTT = FinDiff(0, dl, acc=6)(ClarrayTT)[order]
+    derClEE = FinDiff(0, dl, acc=6)(ClarrayEE)[order]
+    derClTE = FinDiff(0, dl, acc=6)(ClarrayTE)[order]
 
     dl_dA = 1.0 * fitting_formula_Montefalcone2025(cosmo.ell)
 

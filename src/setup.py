@@ -43,122 +43,53 @@ class CosmoResults:
         self.noise_Planck = True if pardict["noise_Planck"] == "True" else False
 
         # for derivatives w.r.t. thetastar
-        pardictbefore = copy.deepcopy(pardict)
-        pardictafter = copy.deepcopy(pardict)
-        pardictbefore["thetastar"] = self.theta_star * (1.0 - fracstepthetastar) / 100.0
-        if "h" in pardictbefore.keys():
-            del pardictbefore["h"]
-        pardictafter["thetastar"] = self.theta_star * (1.0 + fracstepthetastar) / 100.0
-        if "h" in pardictafter.keys():
-            del pardictafter["h"]
-        minus_thstar = self.run_camb(pardictbefore)
-        plus_thstar = self.run_camb(pardictafter)
-        self.clTTEETE_minthetastar = minus_thstar[1:4]
-        self.clTTEETE_plusthetastar = plus_thstar[1:4]
+        self.clTTEETE_variations_thetastar = []
+        self.clTTEETE_variations_omegab = []
+        self.clTTEETE_variations_omegacdm = []
+        self.clTTEETE_variations_As = []
+        self.clTTEETE_variations_ns = []
+        self.clTTEETE_variations_tau = []
+        for i in [-4.0, -3.0, -2.0, -1.0, 1.0, 2.0, 3.0, 4.0]:
+            pardictcopy = copy.deepcopy(pardict)
+            pardictcopy["thetastar"] = (
+                self.theta_star * (1.0 + i * fracstepthetastar) / 100.0
+            )
+            if "h" in pardictcopy.keys():
+                del pardictcopy["h"]
 
-        pardictbefore["thetastar"] = (
-            self.theta_star * (1.0 - 2.0 * fracstepthetastar) / 100.0
-        )
-        pardictafter["thetastar"] = (
-            self.theta_star * (1.0 + 2.0 * fracstepthetastar) / 100.0
-        )
-        minus_thstar = self.run_camb(pardictbefore)
-        plus_thstar = self.run_camb(pardictafter)
-        self.clTTEETE_minthetastar2 = minus_thstar[1:4]
-        self.clTTEETE_plusthetastar2 = plus_thstar[1:4]
+            var = self.run_camb(pardictcopy)
 
-        # for derivatives w.r.t. Omegab
-        pardictbefore = copy.deepcopy(pardict)
-        pardictafter = copy.deepcopy(pardict)
-        pardictbefore["omega_b"] = self.Omegab * (1.0 - fracstepomegab)
-        pardictafter["omega_b"] = self.Omegab * (1.0 + fracstepomegab)
-        minus_Omegab = self.run_camb(pardictbefore)
-        self.clTTEETE_minOmegab = minus_Omegab[1:4]
-        plus_Omegab = self.run_camb(pardictafter)
-        self.clTTEETE_plusOmegab = plus_Omegab[1:4]
+            self.clTTEETE_variations_thetastar.append((var[1:4]))
 
-        pardictbefore["omega_b"] = self.Omegab * (1.0 - 2.0 * fracstepomegab)
-        pardictafter["omega_b"] = self.Omegab * (1.0 + 2.0 * fracstepomegab)
-        minus_Omegab = self.run_camb(pardictbefore)
-        self.clTTEETE_minOmegab2 = minus_Omegab[1:4]
-        plus_Omegab = self.run_camb(pardictafter)
-        self.clTTEETE_plusOmegab2 = plus_Omegab[1:4]
+            pardictcopy = copy.deepcopy(pardict)
+            pardictcopy["omega_b"] = self.Omegab * (1.0 + i * fracstepomegab)
+            var = self.run_camb(pardictcopy)
 
-        # for derivatives w.r.t. Omega_cdm
-        pardictbefore = copy.deepcopy(pardict)
-        pardictafter = copy.deepcopy(pardict)
-        pardictbefore["omega_cdm"] = self.Omega_cdm * (1.0 - fracstepomegacdm)
-        pardictafter["omega_cdm"] = self.Omega_cdm * (1.0 + fracstepomegacdm)
-        minus_Omegacdm = self.run_camb(pardictbefore)
-        self.clTTEETE_minOmegacdm = minus_Omegacdm[1:4]
-        plus_Omegacdm = self.run_camb(pardictafter)
-        self.clTTEETE_plusOmegacdm = plus_Omegacdm[1:4]
+            self.clTTEETE_variations_omegab.append((var[1:4]))
 
-        pardictbefore["omega_cdm"] = self.Omega_cdm * (1.0 - 2.0 * fracstepomegacdm)
-        pardictafter["omega_cdm"] = self.Omega_cdm * (1.0 + 2.0 * fracstepomegacdm)
-        minus_Omegacdm = self.run_camb(pardictbefore)
-        self.clTTEETE_minOmegacdm2 = minus_Omegacdm[1:4]
-        plus_Omegacdm = self.run_camb(pardictafter)
-        self.clTTEETE_plusOmegacdm2 = plus_Omegacdm[1:4]
+            pardictcopy = copy.deepcopy(pardict)
+            pardictcopy["omega_cdm"] = self.Omega_cdm * (1.0 + i * fracstepomegacdm)
+            var = self.run_camb(pardictcopy)
+            self.clTTEETE_variations_omegacdm.append((var[1:4]))
 
-        # for derivatives w.r.t. A_s
-        pardictbefore = copy.deepcopy(pardict)
-        pardictafter = copy.deepcopy(pardict)
-        del pardictbefore["ln10^{10}A_s"]
-        del pardictafter["ln10^{10}A_s"]
-        pardictbefore["A_s"] = np.exp((self.lnAs10) * (1.0 - fracstepAs)) * 1.0e-10
-        pardictafter["A_s"] = np.exp((self.lnAs10) * (1.0 + fracstepAs)) * 1.0e-10
-        minus_As = self.run_camb(pardictbefore)
-        self.clTTEETE_minAs = minus_As[1:4]
-        plus_As = self.run_camb(pardictafter)
-        self.clTTEETE_plusAs = plus_As[1:4]
+            pardictcopy = copy.deepcopy(pardict)
+            pardictcopy["A_s"] = (
+                np.exp((self.lnAs10) * (1.0 + i * fracstepAs)) * 1.0e-10
+            )
+            var = self.run_camb(pardictcopy)
+            self.clTTEETE_variations_As.append((var[1:4]))
 
-        pardictbefore["A_s"] = (
-            np.exp((self.lnAs10) * (1.0 - 2.0 * fracstepAs)) * 1.0e-10
-        )
-        pardictafter["A_s"] = np.exp((self.lnAs10) * (1.0 + 2.0 * fracstepAs)) * 1.0e-10
-        minus_As = self.run_camb(pardictbefore)
-        self.clTTEETE_minAs2 = minus_As[1:4]
-        plus_As = self.run_camb(pardictafter)
-        self.clTTEETE_plusAs2 = plus_As[1:4]
+            pardictcopy = copy.deepcopy(pardict)
+            pardictcopy["n_s"] = self.ns * (1.0 + i * fracstepns)
+            var = self.run_camb(pardictcopy)
+            self.clTTEETE_variations_ns.append((var[1:4]))
 
-        # for derivatives w.r.t. n_s
-        pardictbefore = copy.deepcopy(pardict)
-        pardictafter = copy.deepcopy(pardict)
-        pardictbefore["n_s"] = self.ns * (1.0 - fracstepns)
-        pardictafter["n_s"] = self.ns * (1.0 + fracstepns)
-        minus_ns = self.run_camb(pardictbefore)
-        self.clTTEETE_minns = minus_ns[1:4]
-        plus_ns = self.run_camb(pardictafter)
-        self.clTTEETE_plusns = plus_ns[1:4]
-
-        pardictbefore["n_s"] = self.ns * (1.0 - 2.0 * fracstepns)
-        pardictafter["n_s"] = self.ns * (1.0 + 2.0 * fracstepns)
-        minus_ns = self.run_camb(pardictbefore)
-        self.clTTEETE_minns2 = minus_ns[1:4]
-        plus_ns = self.run_camb(pardictafter)
-        self.clTTEETE_plusns2 = plus_ns[1:4]
-
-        # for derivatives w.r.t. tau_reio
-        pardictbefore = copy.deepcopy(pardict)
-        pardictafter = copy.deepcopy(pardict)
-        pardictbefore["tau_reio"] = float(pardict["tau_reio"]) * (1.0 - fracsteptau)
-        pardictafter["tau_reio"] = float(pardict["tau_reio"]) * (1.0 + fracsteptau)
-        minus_tau = self.run_camb(pardictbefore)
-        self.clTTEETE_mintau = minus_tau[1:4]
-        plus_tau = self.run_camb(pardictafter)
-        self.clTTEETE_plustau = plus_tau[1:4]
-
-        pardictbefore["tau_reio"] = float(pardict["tau_reio"]) * (
-            1.0 - 2.0 * fracsteptau
-        )
-        pardictafter["tau_reio"] = float(pardict["tau_reio"]) * (
-            1.0 + 2.0 * fracsteptau
-        )
-        minus_tau = self.run_camb(pardictbefore)
-        self.clTTEETE_mintau2 = minus_tau[1:4]
-        plus_tau = self.run_camb(pardictafter)
-        self.clTTEETE_plustau2 = plus_tau[1:4]
+            pardictcopy = copy.deepcopy(pardict)
+            pardictcopy["tau_reio"] = float(pardict["tau_reio"]) * (
+                1.0 + i * fracsteptau
+            )
+            var = self.run_camb(pardictcopy)
+            self.clTTEETE_variations_tau.append((var[1:4]))
 
     def run_camb(self, pardict: ConfigObj):
         """Runs an instance of CAMB given the cosmological parameters in pardict and redshift bins
@@ -227,7 +158,7 @@ class CosmoResults:
         # Run CAMB
         results = camb.get_results(pars)
 
-        ll = np.arange(1, 5001)
+        ll = np.arange(2, 5001)
 
         # print(results.get_cmb_power_spectra(
         #     pars, CMB_unit="muK", lmax=5000, raw_cl=True))
@@ -236,9 +167,9 @@ class CosmoResults:
             pars, CMB_unit="muK", lmax=5000, raw_cl=True
         )["total"]
 
-        clTT = np.array(CMBdat[:, 0][1:])
-        clEE = np.array(CMBdat[:, 1][1:])
-        clTE = np.array(CMBdat[:, 3][1:])
+        clTT = np.array(CMBdat[:, 0][2:])
+        clEE = np.array(CMBdat[:, 1][2:])
+        clTE = np.array(CMBdat[:, 3][2:])
 
         # Get some derived quantities
         area = float(pardict["skyarea"]) * (np.pi / 180.0) ** 2
@@ -259,7 +190,7 @@ class CosmoResults:
         #     - fitting_formula_Baumann19(kin)
         # ) / theta_star
 
-        ellshift = (A_phi) * fitting_formula_Montefalcone2025(ll)  # / theta_star
+        ellshift = (A_phi) * fitting_formula_Montefalcone2025(ll)
 
         clTT = splrep(ll + ellshift, clTT)
         clEE = splrep(ll + ellshift, clEE)

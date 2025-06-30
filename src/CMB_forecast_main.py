@@ -18,12 +18,12 @@ if __name__ == "__main__":
     if "geff_fixed" not in pardict:
         pardict["geff_fixed"] = True
 
-    fracstepthetastar = 0.001  # good
-    fracstepomegab = 0.001
-    fracstepomegacdm = 0.001
-    fracstepAs = 0.001  # good
-    fracstepns = 0.0001  # good
-    fracsteptau = 0.001  # good
+    fracstepthetastar = 0.0025  # good
+    fracstepomegab = 0.0025
+    fracstepomegacdm = 0.0025
+    fracstepAs = 0.0025  # good
+    fracstepns = 0.0025  # good
+    fracsteptau = 0.0025  # good
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -90,20 +90,20 @@ if __name__ == "__main__":
     # Loop over redshifts and compute the Fisher matrix and output the 3x3 matrix
 
     if pardict.as_bool("geff_fixed"):
-        # console.log(
-        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
-        # # )
         console.log(
-            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
+            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
         )
+        # console.log(
+        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
+        # )
 
     else:
-        # console.log(
-        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
-        # )
         console.log(
-            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
+            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
         )
+        # console.log(
+        #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
+        # )
 
     Catch = Fish(
         cosmo,
@@ -123,11 +123,6 @@ if __name__ == "__main__":
 
     # cov = np.linalg.inv(Catch)
     # console.log('matrix condition number: ', np.linalg.cond(Catch))
-
-    # import copy
-    # Catch2 = copy.deepcopy(Catch)
-    # Catch2 = np.delete(Catch2, 1, axis=0)
-    # Catch2 = np.delete(Catch2, 1, axis=1)
 
     # console.log('matrix condition number without A_phi: ', np.linalg.cond(Catch2))
 
@@ -154,15 +149,23 @@ if __name__ == "__main__":
     # console.log(Catch @ np.linalg.inv(Catch) - np.eye(len(Catch)))
 
     # print(Catch)
-    for i in range(len(Catch)):
-        console.log(Catch[i, :])
+    # for i in range(len(Catch)):
+    #     console.log(Catch[i, :])
 
     # Catch[1][1] += 1.0 / (0.1**2)  # add prior on A_phi
 
     # Catch[2][2] += 1.0 / (0.002**2)  # add prior on Omegab
+    import copy
+
+    Catch2 = copy.deepcopy(Catch)
+    Catch2 = np.delete(Catch2, 1, axis=0)  # remove A_phi
+    Catch2 = np.delete(Catch2, 1, axis=1)
+
+    covCatch2 = np.linalg.inv(Catch2)
+    errs2 = np.sqrt(np.diag(covCatch2))
+    print(errs2)
 
     cov = np.linalg.inv(Catch)
-
     errs = np.sqrt(np.diag(cov))
 
     print(errs)
@@ -246,9 +249,9 @@ if __name__ == "__main__":
 
     # print(np.sqrt(np.diag(np.linalg.inv(Catch_standard))))
 
-    console.log(Catch)
+    # console.log(Catch)
 
-    print(Catch @ np.linalg.inv(Catch) - np.eye(len(Catch)))
+    # print(Catch @ np.linalg.inv(Catch) - np.eye(len(Catch)))
 
     # import matplotlib.pyplot as plt
     # plt.imshow(Catch)
