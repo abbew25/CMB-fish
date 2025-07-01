@@ -17,13 +17,23 @@ if __name__ == "__main__":
 
     if "geff_fixed" not in pardict:
         pardict["geff_fixed"] = True
+    if "neutrino_mass_fixed" not in pardict:
+        pardict["neutrino_mass_fixed"] = True
 
-    fracstepthetastar = 0.0025  # good
-    fracstepomegab = 0.0025
-    fracstepomegacdm = 0.0025
-    fracstepAs = 0.0025  # good
-    fracstepns = 0.0025  # good
-    fracsteptau = 0.0025  # good
+    if not pardict.as_bool("neutrino_mass_fixed") and not pardict.as_bool("geff_fixed"):
+        console.log(
+            "You have set neutrino_mass_fixed to False and geff_fixed to False. This is not supported."
+        )
+        console.log("Please set one of these parameters to True.")
+        sys.exit(1)
+
+    fracstepthetastar = 0.001  # good
+    fracstepomegab = 0.035
+    fracstepomegacdm = 0.035
+    fracstepAs = 0.001  # good
+    fracstepns = 0.035  # good
+    fracsteptau = 0.001  # good
+    fracstepmnu = 0.035  # good
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -34,6 +44,7 @@ if __name__ == "__main__":
         fracstepAs=fracstepAs,
         fracstepns=fracstepns,
         fracsteptau=fracsteptau,
+        fracstepmnu=fracstepmnu,
     )
 
     console.log("computed CAMB CMB temperature-temperature power spectrum.")
@@ -41,16 +52,21 @@ if __name__ == "__main__":
     console.log("Fitting geff?")
     console.log((not pardict.as_bool("geff_fixed")))
 
+    console.log("Fitting neutrino mass?")
+    console.log((not pardict.as_bool("neutrino_mass_fixed")))
+
     # Precompute some things we might need for the Fisher matrix
     derivatives = Set_Bait(
         cosmo,
         geff_fixed=pardict.as_bool("geff_fixed"),
+        neutrino_mass_fixed=pardict.as_bool("neutrino_mass_fixed"),
         fracstepthetastar=fracstepthetastar,
         fracstepomegab=fracstepomegab,
         fracstepomegacdm=fracstepomegacdm,
         fracstepAs=fracstepAs,
         fracstepns=fracstepns,
         fracsteptau=fracsteptau,
+        fracstepmnu=fracstepmnu,
     )
 
     derClATT, derClAEE, derClATE = derivatives[0]
@@ -61,8 +77,11 @@ if __name__ == "__main__":
     derClnsTT, derClnsEE, derClnsTE = derivatives[5]
     derCltauTT, derCltauEE, derCltauTE = derivatives[6]
     derClgeffTT, derClgeffEE, derClgeffTE = None, None, None
+    derClmnuTT, derClmnuEE, derClmnuTE = None, None, None
     if not pardict.as_bool("geff_fixed"):
         derClgeffTT, derClgeffEE, derClgeffTE = derivatives[7]
+    if not pardict.as_bool("neutrino_mass_fixed"):
+        derClmnuTT, derClmnuEE, derClmnuTE = derivatives[7]
 
     # import matplotlib.pyplot as plt
     # plt.plot(cosmo.ell, derClA(cosmo.ell))
@@ -89,7 +108,7 @@ if __name__ == "__main__":
 
     # Loop over redshifts and compute the Fisher matrix and output the 3x3 matrix
 
-    if pardict.as_bool("geff_fixed"):
+    if pardict.as_bool("geff_fixed") and pardict.as_bool("neutrino_mass_fixed"):
         console.log(
             "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
         )
@@ -97,13 +116,18 @@ if __name__ == "__main__":
         #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)"
         # )
 
-    else:
+    elif not pardict.as_bool("geff_fixed") and pardict.as_bool("neutrino_mass_fixed"):
         console.log(
             "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
         )
         # console.log(
         #     "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  log10Geff  geff_err(%)"
         # )
+
+    elif pardict.as_bool("geff_fixed") and not pardict.as_bool("neutrino_mass_fixed"):
+        console.log(
+            "#  100theta_star  100theta_star_err(%)  A(Neff)  A(Neff)_err(%)  100Omegab  100Omegab_err(%)  Omegacdm  Omegacdm_err(%)  As10  As10_err(%)  ns  ns_err(%)  tau  tau_err(%)  mnu  mnu_err(%)"
+        )
 
     Catch = Fish(
         cosmo,
@@ -115,11 +139,18 @@ if __name__ == "__main__":
         [derClnsTT, derClnsEE, derClnsTE],
         [derCltauTT, derCltauEE, derCltauTE],
         [derClgeffTT, derClgeffEE, derClgeffTE],
+        [derClmnuTT, derClmnuEE, derClmnuTE],
         pardict.as_bool("geff_fixed"),
+        pardict.as_bool("neutrino_mass_fixed"),
     )
 
     # add prior on tau
     # Catch[-1][-1] += 1.0 / (0.01**2)
+
+    Catch[0, :] *= 100.0  # 10000 theta_star -> 100 theta_star
+    Catch[:, 0] *= 100.0  # 10000 theta_star -> 100 theta_star
+    Catch[3, :] *= 100.0  # 100 Omegacdm -> Omegacdm
+    Catch[:, 3] *= 100.0  # 100 Omegacdm -> Omegacdm
 
     # cov = np.linalg.inv(Catch)
     # console.log('matrix condition number: ', np.linalg.cond(Catch))
@@ -131,9 +162,9 @@ if __name__ == "__main__":
     # exit()
 
     # import matplotlib.pyplot as plt
-    # # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
-    # # plt.colorbar()
-    # # plt.show()
+    # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
+    # plt.colorbar(
+    # plt.show()
 
     # Catch = np.delete(Catch, 1, axis=0)  # remove A_phi
     # Catch = np.delete(Catch, 1, axis=1)
@@ -162,10 +193,17 @@ if __name__ == "__main__":
     Catch2 = np.delete(Catch2, 1, axis=1)
 
     covCatch2 = np.linalg.inv(Catch2)
+
+    # covCatch2[0, :] /= 100.0
+    # covCatch2[:, 0] /= 100.0  # A_phi
+    # covCatch2[2, :] /= 100.0
+    # covCatch2[:, 2] /= 100.0  # Omegab
+
     errs2 = np.sqrt(np.diag(covCatch2))
     print(errs2)
 
     cov = np.linalg.inv(Catch)
+
     errs = np.sqrt(np.diag(cov))
 
     print(errs)
@@ -195,7 +233,10 @@ if __name__ == "__main__":
             ]
         )
 
-    if not pardict.as_bool("geff_fixed"):
+    if not pardict.as_bool("neutrino_mass_fixed"):
+        means = np.append(means, cosmo.mnu)
+
+    if not pardict.as_bool("geff_fixed") or not pardict.as_bool("neutrino_mass_fixed"):
         txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             # txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
             means[0],
@@ -288,7 +329,7 @@ if __name__ == "__main__":
     # exit()
 
     # make some pretty contour plots
-    if pardict.as_bool("geff_fixed"):
+    if pardict.as_bool("geff_fixed") and pardict.as_bool("neutrino_mass_fixed"):
         from chainconsumer import ChainConsumer, Chain
         import matplotlib.pyplot as plt
 
@@ -313,7 +354,7 @@ if __name__ == "__main__":
         c.plotter.plot()
         plt.show()
 
-    else:
+    elif not pardict.as_bool("geff_fixed") and pardict.as_bool("neutrino_mass_fixed"):
         # plot the contour for beta_phi and alpha_iso
         from chainconsumer import ChainConsumer, Chain
         import matplotlib.pyplot as plt
@@ -326,12 +367,38 @@ if __name__ == "__main__":
                 columns=[
                     r"$100\theta_*$",
                     r"$A_{\phi}$",
-                    r"$100\Omega_b$h^2",
+                    r"$100\Omega_bh^2$",
                     r"$\Omega_{\mathrm{cdm}}h^2$",
                     r"$\ln(A_s10^{10})$",
                     r"$n_s$",
                     r"$\tau$",
                     r"$\log_{10}G_{\mathrm{eff}}$",
+                ],
+                name="cov",
+            )
+        )
+        c.plotter.plot()
+        plt.show()
+
+    elif pardict.as_bool("geff_fixed") and not pardict.as_bool("neutrino_mass_fixed"):
+        # plot the contour for beta_phi and alpha_iso
+        from chainconsumer import ChainConsumer, Chain
+        import matplotlib.pyplot as plt
+
+        c = ChainConsumer()
+        c.add_chain(
+            Chain.from_covariance(
+                means,
+                cov,
+                columns=[
+                    r"$100\theta_*$",
+                    r"$A_{\phi}$",
+                    r"$100\Omega_bh^2$",
+                    r"$\Omega_{\mathrm{cdm}}h^2$",
+                    r"$\ln(A_s10^{10})$",
+                    r"$n_s$",
+                    r"$\tau$",
+                    r"$m_\nu$",
                 ],
                 name="cov",
             )

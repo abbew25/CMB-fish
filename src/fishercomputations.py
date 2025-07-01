@@ -1,25 +1,25 @@
 import numpy as np
-from findiff import FinDiff
-from scipy.interpolate import splev
 from setup import CosmoResults, fitting_formula_Montefalcone2025
 import numpy.typing as npt
-from scipy.interpolate import interp1d
+from scipy.interpolate import CubicSpline
 from setup import derivell_geff
 
 
 def Set_Bait(
     cosmo: CosmoResults,
     geff_fixed: bool = True,
+    neutrino_mass_fixed: bool = True,
     fracstepthetastar: float = 0.002,
     fracstepomegab: float = 0.002,
     fracstepomegacdm: float = 0.002,
     fracstepAs: float = 0.002,
     fracstepns: float = 0.002,
     fracsteptau: float = 0.002,
+    fracstepmnu: float = 0.002,
 ):
     derClthetastar = compute_deriv(
         cosmo,
-        cosmo.theta_star,
+        cosmo.theta_star * 100.0,
         cosmo.clTTEETE_variations_thetastar,
         fracstep=fracstepthetastar,
     )
@@ -33,7 +33,7 @@ def Set_Bait(
     )
     derClOmegacdm = compute_deriv(
         cosmo,
-        cosmo.Omega_cdm,
+        cosmo.Omega_cdm * 100.0,
         cosmo.clTTEETE_variations_omegacdm,
         fracstep=fracstepomegacdm,
     )
@@ -56,7 +56,17 @@ def Set_Bait(
         fracstep=fracsteptau,
     )
 
-    if geff_fixed:
+    derClmnu = []
+    if not neutrino_mass_fixed:
+        # If neutrino mass is not fixed, compute the derivative for mnu
+        derClmnu = compute_deriv(
+            cosmo,
+            cosmo.mnu,
+            cosmo.clTTEETE_variations_mnu,
+            fracstep=fracstepmnu,
+        )
+
+    if geff_fixed and neutrino_mass_fixed:
         return (
             derClAphi,
             derClthetastar,
@@ -66,6 +76,7 @@ def Set_Bait(
             derClns,
             derCltau,
         )
+
     elif not geff_fixed:
         return (
             derClAphi,
@@ -78,17 +89,30 @@ def Set_Bait(
             derClgeff,
         )
 
+    elif not neutrino_mass_fixed:
+        return (
+            derClAphi,
+            derClthetastar,
+            derClOmegab,
+            derClOmegacdm,
+            derClAs,
+            derClns,
+            derCltau,
+            derClmnu,
+        )
+
 
 def compute_deriv(
     cosmo: CosmoResults, paramcentre: float, spectra: list, fracstep: float = 0.002
 ):
     centre = [
-        splev(cosmo.ell, cosmo.clTT),
-        splev(cosmo.ell, cosmo.clEE),
-        splev(cosmo.ell, cosmo.clTE),
+        cosmo.clTT,  # splev(cosmo.ell, cosmo.clTT),
+        cosmo.clEE,  # splev(cosmo.ell, cosmo.clEE),
+        cosmo.clTE,  # splev(cosmo.ell, cosmo.clTE),
     ]
 
-    d_dthetastar = FinDiff(0, fracstep * paramcentre, acc=6)
+    # d_dthetastar = FinDiff(0, fracstep * paramcentre, acc=2)
+    step = fracstep * paramcentre
 
     s1, s2, s3, s4, s5, s6, s7, s8 = (
         spectra[0],
@@ -105,87 +129,135 @@ def compute_deriv(
 
     for i in range(3):
         CLs = np.zeros((9, len(cosmo.ell)))
-        CLs[0, :] = splev(cosmo.ell, s1[i])
-        CLs[1, :] = splev(cosmo.ell, s2[i])
-        CLs[2, :] = splev(cosmo.ell, s3[i])
-        CLs[3, :] = splev(cosmo.ell, s4[i])
-        CLs[4, :] = centre[i]
-        CLs[5, :] = splev(cosmo.ell, s5[i])
-        CLs[6, :] = splev(cosmo.ell, s6[i])
-        CLs[7, :] = splev(cosmo.ell, s7[i])
-        CLs[4, :] = splev(cosmo.ell, s8[i])
+        CLs[0, :] = s1[i] * 1.0 / 280.0
+        CLs[1, :] = s2[i] * -4.0 / 105.0
+        CLs[2, :] = s3[i] * 1.0 / 5.0
+        CLs[3, :] = s4[i] * -4.0 / 5.0
+        CLs[4, :] = centre[i] * 0.0
+        CLs[5, :] = s5[i] * 4.0 / 5.0
+        CLs[6, :] = s6[i] * -1.0 / 5.0
+        CLs[7, :] = s7[i] * 4.0 / 105.0
+        CLs[8, :] = s8[i] * -1.0 / 280.0
 
-        derCl_thetastar = d_dthetastar(CLs)
-        derivs.append(interp1d(cosmo.ell, derCl_thetastar[4], kind="cubic"))
+        # derCl_thetastar = d_dthetastar(CLs)
+        dfdx = np.sum(CLs, axis=0) / step
+
+        derivs.append(dfdx)  # derCl_thetastar[4]))
 
     return derivs[0], derivs[1], derivs[2]
 
 
 def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.1):
-    order = 6
+    order = 4
     ClarrayTT = np.zeros((2 * order + 1, len(cosmo.ell)))
     ClarrayEE = np.zeros((2 * order + 1, len(cosmo.ell)))
     ClarrayTE = np.zeros((2 * order + 1, len(cosmo.ell)))
 
+    coefficients = [
+        1.0 / 280.0,
+        -4.0 / 105.0,
+        1.0 / 5.0,
+        -4.0 / 5.0,
+        0.0,
+        4.0 / 5.0,
+        -1.0 / 5.0,
+        4.0 / 105.0,
+        -1.0 / 280.0,
+    ]
+
     for i in range(-order, order + 1):
         linterp = cosmo.ell + i * dl
-        ClarrayTT[i + order] = splev(linterp, cosmo.clTT, ext=1)
-        ClarrayEE[i + order] = splev(linterp, cosmo.clEE, ext=1)
-        ClarrayTE[i + order] = splev(linterp, cosmo.clTE, ext=1)
+        ClarrayTT[i + order] = (
+            CubicSpline(cosmo.ell, cosmo.clTT)(linterp) * coefficients[i + 4]
+        )  # splev(linterp, cosmo.clTT, ext=1)
+        ClarrayEE[i + order] = (
+            CubicSpline(cosmo.ell, cosmo.clEE)(linterp) * coefficients[i + 4]
+        )  # splev(linterp, cosmo.clEE, ext=1)
+        ClarrayTE[i + order] = (
+            CubicSpline(cosmo.ell, cosmo.clTE)(linterp) * coefficients[i + 4]
+        )  # splev(linterp, cosmo.clTE, ext=1)
 
-    derClTT = FinDiff(0, dl, acc=6)(ClarrayTT)[order]
-    derClEE = FinDiff(0, dl, acc=6)(ClarrayEE)[order]
-    derClTE = FinDiff(0, dl, acc=6)(ClarrayTE)[order]
+    # derClTT = FinDiff(0, dl, acc=6)(ClarrayTT)[order]
+    # derClEE = FinDiff(0, dl, acc=6)(ClarrayEE)[order]
+    # derClTE = FinDiff(0, dl, acc=6)(ClarrayTE)[order]
+
+    derClTT = np.sum(ClarrayTT, axis=0) / dl
+    derClEE = np.sum(ClarrayEE, axis=0) / dl
+    derClTE = np.sum(ClarrayTE, axis=0) / dl
 
     dl_dA = 1.0 * fitting_formula_Montefalcone2025(cosmo.ell)
 
     derClTT_A = derClTT * dl_dA
     derClEE_A = derClEE * dl_dA
     derClTE_A = derClTE * dl_dA
-    derClTT_A = interp1d(cosmo.ell, derClTT_A, kind="cubic")
-    derClEE_A = interp1d(cosmo.ell, derClEE_A, kind="cubic")
-    derClTE_A = interp1d(cosmo.ell, derClTE_A, kind="cubic")
+    # derClTT_A = CubicSpline(cosmo.ell, derClTT_A)
+    # derClEE_A = CubicSpline(cosmo.ell, derClEE_A)
+    # derClTE_A = CubicSpline(cosmo.ell, derClTE_A)
     return derClTT_A, derClEE_A, derClTE_A
 
 
-def compute_derive_geff(cosmo: CosmoResults, dl: float = 0.1):
-    order = 6
+def compute_derive_geff(cosmo: CosmoResults, dl: float = 0.02):
+    order = 4
     ClarrayTT = np.zeros((2 * order + 1, len(cosmo.ell)))
     ClarrayEE = np.zeros((2 * order + 1, len(cosmo.ell)))
     ClarrayTE = np.zeros((2 * order + 1, len(cosmo.ell)))
 
+    coefficients = [
+        1.0 / 280.0,
+        -4.0 / 105.0,
+        1.0 / 5.0,
+        -4.0 / 5.0,
+        0.0,
+        4.0 / 5.0,
+        -1.0 / 5.0,
+        4.0 / 105.0,
+        -1.0 / 280.0,
+    ]
+
     for i in range(-order, order + 1):
         linterp = cosmo.ell + i * dl
-        ClarrayTT[i + order] = splev(linterp, cosmo.clTT, ext=1)
-        ClarrayEE[i + order] = splev(linterp, cosmo.clEE, ext=1)
-        ClarrayTE[i + order] = splev(linterp, cosmo.clTE, ext=1)
+        ClarrayTT[i + order] = (
+            CubicSpline(cosmo.ell, cosmo.clTT)(linterp) * coefficients[i + 4]
+        )  # splev(linterp, cosmo.clTT, ext=1)
+        ClarrayEE[i + order] = (
+            CubicSpline(cosmo.ell, cosmo.clEE)(linterp) * coefficients[i + 4]
+        )  # splev(linterp, cosmo.clEE, ext=1)
+        ClarrayTE[i + order] = (
+            CubicSpline(cosmo.ell, cosmo.clTE)(linterp) * coefficients[i + 4]
+        )  # splev(linterp, cosmo.clTE, ext=1)
 
-    derClTT = FinDiff(0, dl, acc=6)(ClarrayTT)[order]
-    derClEE = FinDiff(0, dl, acc=6)(ClarrayEE)[order]
-    derClTE = FinDiff(0, dl, acc=6)(ClarrayTE)[order]
+    # derClTT = FinDiff(0, dl, acc=6)(ClarrayTT)[order]
+    # derClEE = FinDiff(0, dl, acc=6)(ClarrayEE)[order]
+    # derClTE = FinDiff(0, dl, acc=6)(ClarrayTE)[order]
+
+    derClTT = np.sum(ClarrayTT, axis=0) / dl
+    derClEE = np.sum(ClarrayEE, axis=0) / dl
+    derClTE = np.sum(ClarrayTE, axis=0) / dl
 
     dll_dgeff = derivell_geff(cosmo.ell, cosmo.log10Geff, cosmo.theta_star, cosmo.A_phi)
 
     derClTT_geff = derClTT * dll_dgeff
     derClEE_geff = derClEE * dll_dgeff
     derClTE_geff = derClTE * dll_dgeff
-    derClTT_interp = interp1d(cosmo.ell, derClTT_geff, kind="cubic")
-    derClEE_interp = interp1d(cosmo.ell, derClEE_geff, kind="cubic")
-    derClTE_interp = interp1d(cosmo.ell, derClTE_geff, kind="cubic")
-    return derClTT_interp, derClEE_interp, derClTE_interp
+    # derClTT_interp = CubicSpline(cosmo.ell, derClTT_geff)
+    # derClEE_interp = CubicSpline(cosmo.ell, derClEE_geff)
+    # derClTE_interp = CubicSpline(cosmo.ell, derClTE_geff)
+    return derClTT_geff, derClEE_geff, derClTE_geff
 
 
 def Fish(
     cosmo: CosmoResults,
     derClthetastar: list,
-    derClbeta: list,
+    derClA: list,
     derClOmegab: list,
     derClOmegacdm: list,
     derClAs: list,
     derClns: list,
     derCltau: list,
     derClgeff: list,
+    derClmnu: list = None,
     geff_fixed: bool = True,
+    mnu_fixed: bool = True,
 ):
     """Computes the Fisher information on cosmological parameters theta_star, A_phi (phase shift amplitude due to standard model neutrinos,
     log10Geff).
@@ -203,10 +275,12 @@ def Fish(
     """
     # Uses Simpson's rule or adaptive quadrature to integrate over all k and mu.
     # mu and k values for Simpson's rule
-    lvec = np.arange(
-        np.min([cosmo.lminTT, cosmo.lminTE, cosmo.lminEE]),
-        np.max([cosmo.lmaxTT, cosmo.lmaxTE, cosmo.lmaxEE]),
-    )
+    # lvec = np.arange(
+    #     np.min([cosmo.lminTT, cosmo.lminTE, cosmo.lminEE]),
+    #     np.max([cosmo.lmaxTT, cosmo.lmaxTE, cosmo.lmaxEE]) + 1,
+    # )
+
+    lvec = cosmo.ell
 
     # 2D integration
     ManyFish = np.sum(
@@ -214,14 +288,16 @@ def Fish(
             lvec,
             cosmo,
             derClthetastar,
-            derClbeta,
+            derClA,
             derClOmegab,
             derClOmegacdm,
             derClAs,
             derClns,
             derCltau,
             derClgeff,
+            derClmnu,
             geff_fixed,
+            mnu_fixed,
         ),
         axis=2,
     )
@@ -240,7 +316,9 @@ def CastNet(
     derClns: list,
     derCltau: list,
     derClgeff: list,
+    derClmnu: list,
     geff_fixed: bool = True,
+    mnu_fixed: bool = True,
 ):
     """Compute the Fisher matrix for a vector of ll.
 
@@ -264,7 +342,7 @@ def CastNet(
     """
 
     Shoal = np.zeros((8, 8, len(ll)))
-    if geff_fixed:
+    if geff_fixed and mnu_fixed:
         Shoal = np.zeros((7, 7, len(ll)))
 
     Cl_arr = [cosmo.clTT, cosmo.clEE, cosmo.clTE]
@@ -273,19 +351,23 @@ def CastNet(
     for i, lval in enumerate(ll):
         derCl = np.array(
             [
-                np.array([derClthetastar[j](lval) for j in range(len(derClthetastar))]),
-                np.array([derClA[j](lval) for j in range(len(derClA))]),
-                np.array([derClOmegab[j](lval) for j in range(len(derClOmegab))]),
-                np.array([derClOmegacdm[j](lval) for j in range(len(derClOmegacdm))]),
-                np.array([derClAs[j](lval) for j in range(len(derClAs))]),
-                np.array([derClns[j](lval) for j in range(len(derClns))]),
-                np.array([derCltau[j](lval) for j in range(len(derCltau))]),
+                np.array([derClthetastar[j][i] for j in range(len(derClthetastar))]),
+                np.array([derClA[j][i] for j in range(len(derClA))]),
+                np.array([derClOmegab[j][i] for j in range(len(derClOmegab))]),
+                np.array([derClOmegacdm[j][i] for j in range(len(derClOmegacdm))]),
+                np.array([derClAs[j][i] for j in range(len(derClAs))]),
+                np.array([derClns[j][i] for j in range(len(derClns))]),
+                np.array([derCltau[j][i] for j in range(len(derCltau))]),
             ]
         )
 
         if not geff_fixed:
             derCl = np.vstack(
-                (derCl, ([derClgeff[0](lval), derClgeff[1](lval), derClgeff[2](lval)]))
+                (derCl, ([derClgeff[0][i], derClgeff[1][i], derClgeff[2][i]]))
+            )
+        if not mnu_fixed:
+            derCl = np.vstack(
+                (derCl, ([derClmnu[0][i], derClmnu[1][i], derClmnu[2][i]]))
             )
 
         if lval < cosmo.lminTT or lval > cosmo.lmaxTT:
@@ -296,7 +378,7 @@ def CastNet(
             derCl[:, 2] = 0.0
 
         covCl = compute_cov(
-            np.array([splev(lval, Cl_arr[j]) for j in range(len(Cl_arr))]),
+            np.array([Cl_arr[j][i] for j in range(len(Cl_arr))]),
             lval,
             noise_Planck=cosmo.noise_Planck,
         )
@@ -356,19 +438,23 @@ def compute_cov(cosmoClval: npt.NDArray, lval: float, noise_Planck: bool = True)
     cov_inv: np.ndarray
     """
 
-    deltabT = np.array([33.0, 23.0, 14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
-    deltabE = np.array([14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
-    deltaT = np.array([145.0, 149.0, 137.0, 65.0, 43.0, 66.0, 200.0]) / 3437.75
-    deltaE = np.array([450.0, 103.0, 81.0, 134.0, 406.0]) / 3437.75
+    deltab_f = np.array([9.65, 7.25, 4.99]) / 3437.75
+    deltaT_f = np.array([2.5, 2.2, 4.8e-6]) * deltab_f
+    deltaE_f = np.array([6.7, 4.0, 9.8e-6]) * deltab_f
+
+    # deltabE = np.array([14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
+    # deltabT = np.array([33.0, 23.0, 14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
+    # deltaT = np.array([145.0, 149.0, 137.0, 65.0, 43.0, 66.0, 200.0]) / 3437.75
+    # deltaE = np.array([450.0, 103.0, 81.0, 134.0, 406.0]) / 3437.75
     Nl_freqT = (
         1.0
-        / (deltaT**2)
-        * np.exp(-1.0 * lval * (lval + 1.0) * deltabT**2 / (8.0 * np.log(2.0)))
+        / (deltaT_f**2)
+        * np.exp(-1.0 * lval * (lval + 1.0) * deltab_f**2 / (8.0 * np.log(2.0)))
     )
     Nl_freqE = (
         1.0
-        / (deltaE**2)
-        * np.exp(-1.0 * lval * (lval + 1.0) * deltabE**2 / (8.0 * np.log(2.0)))
+        / (deltaE_f**2)
+        * np.exp(-1.0 * lval * (lval + 1.0) * deltab_f**2 / (8.0 * np.log(2.0)))
     )
     Nl_DeltaT = 1.0 / np.sum(Nl_freqT)
     Nl_DeltaE = 1.0 / np.sum(Nl_freqE)

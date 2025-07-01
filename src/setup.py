@@ -15,6 +15,7 @@ class CosmoResults:
         fracstepAs: float = 0.002,
         fracstepns: float = 0.002,
         fracsteptau: float = 0.002,
+        fracstepmnu: float = 0.002,
     ):
         (
             self.ell,
@@ -30,6 +31,7 @@ class CosmoResults:
             self.A_phi,
             self.log10Geff,
             self.area,
+            self.mnu,
         ) = self.run_camb(pardict)
 
         self.lminTT = int(pardict["lminTT"])
@@ -49,6 +51,7 @@ class CosmoResults:
         self.clTTEETE_variations_As = []
         self.clTTEETE_variations_ns = []
         self.clTTEETE_variations_tau = []
+        self.clTTEETE_variations_mnu = []
         for i in [-4.0, -3.0, -2.0, -1.0, 1.0, 2.0, 3.0, 4.0]:
             pardictcopy = copy.deepcopy(pardict)
             pardictcopy["thetastar"] = (
@@ -91,6 +94,14 @@ class CosmoResults:
             var = self.run_camb(pardictcopy)
             self.clTTEETE_variations_tau.append((var[1:4]))
 
+            if not pardict.as_bool("neutrino_mass_fixed"):
+                pardictcopy = copy.deepcopy(pardict)
+                pardictcopy["Sum_mnu"] = float(pardict["Sum_mnu"]) * (
+                    1.0 + i * fracstepmnu
+                )
+                var = self.run_camb(pardictcopy)
+                self.clTTEETE_variations_mnu.append((var[1:4]))
+
     def run_camb(self, pardict: ConfigObj):
         """Runs an instance of CAMB given the cosmological parameters in pardict and redshift bins
 
@@ -101,7 +112,7 @@ class CosmoResults:
         """
 
         import camb
-        from scipy.interpolate import splrep
+        from scipy.interpolate import CubicSpline
 
         parlinear = copy.deepcopy(pardict)
 
@@ -179,6 +190,7 @@ class CosmoResults:
         lnAs10 = np.log(float(parlinear["A_s"]) * 1.0e10)
         ns = float(parlinear["n_s"])
         tau = float(parlinear["tau_reio"])
+        mnu = float(parlinear["Sum_mnu"]) if "Sum_mnu" in parlinear.keys() else 0.0
 
         A_phi = float(parlinear["A_phi"]) if "A_phi" in parlinear.keys() else 0.0
         log10Geff = (
@@ -198,9 +210,9 @@ class CosmoResults:
 
         # ellshift = (A_phi) * fitting_formula_Montefalcone2025(ll)
 
-        clTT = splrep(ll + ellshift, clTT)
-        clEE = splrep(ll + ellshift, clEE)
-        clTE = splrep(ll + ellshift, clTE)
+        clTT = CubicSpline(ll, clTT)(ll + ellshift)
+        clEE = CubicSpline(ll, clEE)(ll + ellshift)
+        clTE = CubicSpline(ll, clTE)(ll + ellshift)
 
         return (
             ll,
@@ -216,6 +228,7 @@ class CosmoResults:
             A_phi,
             log10Geff,
             area,
+            mnu,
         )
 
 
