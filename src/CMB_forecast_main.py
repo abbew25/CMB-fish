@@ -27,13 +27,21 @@ if __name__ == "__main__":
         console.log("Please set one of these parameters to True.")
         sys.exit(1)
 
-    fracstepthetastar = 0.001  # good
-    fracstepomegab = 0.035
-    fracstepomegacdm = 0.035
-    fracstepAs = 0.001  # good
-    fracstepns = 0.035  # good
+    # fracstepthetastar = 0.015  # good
+    # fracstepomegab = 0.045
+    # fracstepomegacdm = 0.045
+    # fracstepAs = 0.01  # good
+    # fracstepns = 0.001  # good
+    # fracsteptau = 0.01  # good
+    # fracstepmnu = 0.045  # good
+
+    fracstepthetastar = 0.00002  # good
+    fracstepomegab = 0.05
+    fracstepomegacdm = 0.05
+    fracstepAs = 0.01  # good
+    fracstepns = 0.0002  # good
     fracsteptau = 0.001  # good
-    fracstepmnu = 0.035  # good
+    fracstepmnu = 0.05  # good
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -69,19 +77,21 @@ if __name__ == "__main__":
         fracstepmnu=fracstepmnu,
     )
 
-    derClATT, derClAEE, derClATE = derivatives[0]
-    derClthetastarTT, derClthetastarEE, derClthetastarTE = derivatives[1]
-    derClOmegabTT, derClOmegabEE, derClOmegabTE = derivatives[2]
-    derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE = derivatives[3]
-    derClAsTT, derClAsEE, derClAsTE = derivatives[4]
-    derClnsTT, derClnsEE, derClnsTE = derivatives[5]
-    derCltauTT, derCltauEE, derCltauTE = derivatives[6]
-    derClgeffTT, derClgeffEE, derClgeffTE = None, None, None
-    derClmnuTT, derClmnuEE, derClmnuTE = None, None, None
+    derClATT, derClAEE, derClATE, derClABB = derivatives[0]
+    derClthetastarTT, derClthetastarEE, derClthetastarTE, derClthetastarBB = (
+        derivatives[1]
+    )
+    derClOmegabTT, derClOmegabEE, derClOmegabTE, derCLOmegabBB = derivatives[2]
+    derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE, derClOmegamcdmBB = derivatives[3]
+    derClAsTT, derClAsEE, derClAsTE, derClAsBB = derivatives[4]
+    derClnsTT, derClnsEE, derClnsTE, derClnsBB = derivatives[5]
+    derCltauTT, derCltauEE, derCltauTE, derCltauBB = derivatives[6]
+    derClgeffTT, derClgeffEE, derClgeffTE, derClgeffBB = None, None, None, None
+    derClmnuTT, derClmnuEE, derClmnuTE, derClmnuBB = None, None, None, None
     if not pardict.as_bool("geff_fixed"):
-        derClgeffTT, derClgeffEE, derClgeffTE = derivatives[7]
+        derClgeffTT, derClgeffEE, derClgeffTE, derClgeffBB = derivatives[7]
     if not pardict.as_bool("neutrino_mass_fixed"):
-        derClmnuTT, derClmnuEE, derClmnuTE = derivatives[7]
+        derClmnuTT, derClmnuEE, derClmnuTE, derClmnuBB = derivatives[7]
 
     # import matplotlib.pyplot as plt
     # plt.plot(cosmo.ell, derClA(cosmo.ell))
@@ -131,15 +141,15 @@ if __name__ == "__main__":
 
     Catch = Fish(
         cosmo,
-        [derClthetastarTT, derClthetastarEE, derClthetastarTE],
-        [derClATT, derClAEE, derClATE],
-        [derClOmegabTT, derClOmegabEE, derClOmegabTE],
-        [derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE],
-        [derClAsTT, derClAsEE, derClAsTE],
-        [derClnsTT, derClnsEE, derClnsTE],
-        [derCltauTT, derCltauEE, derCltauTE],
-        [derClgeffTT, derClgeffEE, derClgeffTE],
-        [derClmnuTT, derClmnuEE, derClmnuTE],
+        [derClthetastarTT, derClthetastarEE, derClthetastarTE, derClthetastarBB],
+        [derClATT, derClAEE, derClATE, derClABB],
+        [derClOmegabTT, derClOmegabEE, derClOmegabTE, derCLOmegabBB],
+        [derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE, derClOmegamcdmBB],
+        [derClAsTT, derClAsEE, derClAsTE, derClAsBB],
+        [derClnsTT, derClnsEE, derClnsTE, derClnsBB],
+        [derCltauTT, derCltauEE, derCltauTE, derCltauBB],
+        [derClgeffTT, derClgeffEE, derClgeffTE, derClgeffBB],
+        [derClmnuTT, derClmnuEE, derClmnuTE, derClmnuBB],
         pardict.as_bool("geff_fixed"),
         pardict.as_bool("neutrino_mass_fixed"),
     )

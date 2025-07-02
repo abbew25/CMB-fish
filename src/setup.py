@@ -22,6 +22,7 @@ class CosmoResults:
             self.clTT,
             self.clEE,
             self.clTE,
+            self.clBB,
             self.theta_star,
             self.Omegab,
             self.Omega_cdm,
@@ -40,8 +41,11 @@ class CosmoResults:
         self.lmaxTE = int(pardict["lmaxTE"])
         self.lminEE = int(pardict["lminEE"])
         self.lmaxEE = int(pardict["lmaxEE"])
+        self.lminBB = int(pardict["lminBB"])
+        self.lmaxBB = int(pardict["lmaxBB"])
         self.use_TE = True if pardict["use_TE"] == "True" else False
         self.use_EE = True if pardict["use_EE"] == "True" else False
+        self.use_BB = True if pardict["use_BB"] == "True" else False
         self.noise_Planck = True if pardict["noise_Planck"] == "True" else False
 
         # for derivatives w.r.t. thetastar
@@ -62,37 +66,37 @@ class CosmoResults:
 
             var = self.run_camb(pardictcopy)
 
-            self.clTTEETE_variations_thetastar.append((var[1:4]))
+            self.clTTEETE_variations_thetastar.append((var[1:5]))
 
             pardictcopy = copy.deepcopy(pardict)
             pardictcopy["omega_b"] = self.Omegab * (1.0 + i * fracstepomegab)
             var = self.run_camb(pardictcopy)
 
-            self.clTTEETE_variations_omegab.append((var[1:4]))
+            self.clTTEETE_variations_omegab.append((var[1:5]))
 
             pardictcopy = copy.deepcopy(pardict)
             pardictcopy["omega_cdm"] = self.Omega_cdm * (1.0 + i * fracstepomegacdm)
             var = self.run_camb(pardictcopy)
-            self.clTTEETE_variations_omegacdm.append((var[1:4]))
+            self.clTTEETE_variations_omegacdm.append((var[1:5]))
 
             pardictcopy = copy.deepcopy(pardict)
             pardictcopy["A_s"] = (
                 np.exp((self.lnAs10) * (1.0 + i * fracstepAs)) * 1.0e-10
             )
             var = self.run_camb(pardictcopy)
-            self.clTTEETE_variations_As.append((var[1:4]))
+            self.clTTEETE_variations_As.append((var[1:5]))
 
             pardictcopy = copy.deepcopy(pardict)
             pardictcopy["n_s"] = self.ns * (1.0 + i * fracstepns)
             var = self.run_camb(pardictcopy)
-            self.clTTEETE_variations_ns.append((var[1:4]))
+            self.clTTEETE_variations_ns.append((var[1:5]))
 
             pardictcopy = copy.deepcopy(pardict)
             pardictcopy["tau_reio"] = float(pardict["tau_reio"]) * (
                 1.0 + i * fracsteptau
             )
             var = self.run_camb(pardictcopy)
-            self.clTTEETE_variations_tau.append((var[1:4]))
+            self.clTTEETE_variations_tau.append((var[1:5]))
 
             if not pardict.as_bool("neutrino_mass_fixed"):
                 pardictcopy = copy.deepcopy(pardict)
@@ -100,7 +104,7 @@ class CosmoResults:
                     1.0 + i * fracstepmnu
                 )
                 var = self.run_camb(pardictcopy)
-                self.clTTEETE_variations_mnu.append((var[1:4]))
+                self.clTTEETE_variations_mnu.append((var[1:5]))
 
     def run_camb(self, pardict: ConfigObj):
         """Runs an instance of CAMB given the cosmological parameters in pardict and redshift bins
@@ -163,6 +167,7 @@ class CosmoResults:
             neutrino_hierarchy=parlinear["nu_hierarchy"],
             thetastar=parlinear["thetastar"],
             nnu=float(parlinear["Neff"]),
+            # YHe=0.24534
         )
         pars.NonLinear = camb.model.NonLinear_none
         pars.set_for_lmax(5000)
@@ -181,10 +186,17 @@ class CosmoResults:
         clTT = np.array(CMBdat[:, 0][2:])
         clEE = np.array(CMBdat[:, 1][2:])
         clTE = np.array(CMBdat[:, 3][2:])
+        clBB = np.array(CMBdat[:, 2][2:])
+
+        # import matplotlib.pyplot as plt
+        # plt.plot(ll, CMBdat[:, 2][2:], label="BB")
+        # plt.show()
+        # exit()
 
         # Get some derived quantities
         area = float(pardict["skyarea"]) * (np.pi / 180.0) ** 2
         theta_star = results.get_derived_params()["thetastar"]
+        # print(results.bbn_predictions())
         Omegab = float(parlinear["omega_b"])
         Omegacdm = float(parlinear["omega_cdm"])
         lnAs10 = np.log(float(parlinear["A_s"]) * 1.0e10)
@@ -219,6 +231,7 @@ class CosmoResults:
             clTT,
             clEE,
             clTE,
+            clBB,
             theta_star,
             Omegab,
             Omegacdm,

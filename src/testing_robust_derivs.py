@@ -13,13 +13,18 @@ if __name__ == "__main__":
 
     if "geff_fixed" not in pardict:
         pardict["geff_fixed"] = True
+    if "neutrino_mass_fixed" not in pardict:
+        pardict["neutrino_mass_fixed"] = True
 
-    fracstepthetastar = 0.001  # good
-    fracstepomegab = 0.001
-    fracstepomegacdm = 0.001
-    fracstepAs = 0.001  # good
-    fracstepns = 0.00001  # good
+    pardict["neutrino_mass_fixed"] = False
+
+    fracstepthetastar = 0.00002  # good
+    fracstepomegab = 0.05
+    fracstepomegacdm = 0.05
+    fracstepAs = 0.01  # good
+    fracstepns = 0.0002  # good
     fracsteptau = 0.001  # good
+    fracstepmnu = 0.05  # good
 
     # fracstepthetastar = 0.03
     # fracstepomegab = 0.03
@@ -41,6 +46,7 @@ if __name__ == "__main__":
         fracstepAs=fracstepAs,
         fracstepns=fracstepns,
         fracsteptau=fracsteptau,
+        fracstepmnu=fracstepmnu,
     )
 
     console.log("computed CAMB CMB temperature-temperature power spectrum.")
@@ -102,23 +108,30 @@ if __name__ == "__main__":
     derivatives = Set_Bait(
         cosmo,
         geff_fixed=pardict.as_bool("geff_fixed"),
+        neutrino_mass_fixed=pardict.as_bool("neutrino_mass_fixed"),
         fracstepthetastar=fracstepthetastar,
         fracstepomegab=fracstepomegab,
         fracstepomegacdm=fracstepomegacdm,
         fracstepAs=fracstepAs,
         fracstepns=fracstepns,
         fracsteptau=fracsteptau,
+        fracstepmnu=fracstepmnu,
     )
-    derClthetastarTT, derClthetastarEE, derClthetastarTE = derivatives[0]
-    derClATT, derClAEE, derClATE = derivatives[1]
-    derClOmegabTT, derClOmegabEE, derClOmegabTE = derivatives[2]
-    derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE = derivatives[3]
-    derClAsTT, derClAsEE, derClAsTE = derivatives[4]
-    derClnsTT, derClnsEE, derClnsTE = derivatives[5]
-    derCltauTT, derCltauEE, derCltauTE = derivatives[6]
-    derClgeff = []
+    derClATT, derClAEE, derClATE, derClABB = derivatives[0]
+    derClthetastarTT, derClthetastarEE, derClthetastarTE, derClthetastarBB = (
+        derivatives[1]
+    )
+    derClOmegabTT, derClOmegabEE, derClOmegabTE, derCLOmegabBB = derivatives[2]
+    derClOmegacdmTT, derClOmegacdmEE, derClOmegacdmTE, derClOmegacdmBB = derivatives[3]
+    derClAsTT, derClAsEE, derClAsTE, derClAsBB = derivatives[4]
+    derClnsTT, derClnsEE, derClnsTE, derClnsBB = derivatives[5]
+    derCltauTT, derCltauEE, derCltauTE, derCltauBB = derivatives[6]
+    derClgeffTT, derClgeffEE, derClgeffTE, derClgeffBB = None, None, None, None
+    derClmnuTT, derClmnuEE, derClmnuTE, derClmnuBB = None, None, None, None
     if not pardict.as_bool("geff_fixed"):
-        derClgeffTT, derClgeffEE, derClgeffTE = derivatives[7]
+        derClgeffTT, derClgeffEE, derClgeffTE, derClgeffBB = derivatives[7]
+    if not pardict.as_bool("neutrino_mass_fixed"):
+        derClmnuTT, derClmnuEE, derClmnuTE, derClmnuBB = derivatives[7]
 
     # ax1.plot(cosmo.ell, derClthetastarTT(cosmo.ell), label=r"$\partial C_\ell^{TT}/\partial 100\theta_*$", color='red')
     # ax1.plot(cosmo.ell, derClthetastarEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial 100\theta_*$",  color='red', linestyle='--')
@@ -128,47 +141,50 @@ if __name__ == "__main__":
     # ax2.plot(cosmo.ell, derCltauEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial tau$", color='red', linestyle='--')
     # ax2.plot(cosmo.ell, derCltauTE(cosmo.ell), label=r"$\partial C_\ell^{TE}/\partial tau$", color='red', linestyle=':')
 
-    ax3.plot(
-        cosmo.ell,
-        derClOmegabTT(cosmo.ell),
-        label=r"$\partial C_\ell^{TT}/\partial \Omega_b$",
-        color="red",
-    )
-    ax3.plot(
-        cosmo.ell,
-        derClOmegabEE(cosmo.ell),
-        label=r"$\partial C_\ell^{EE}/\partial \Omega_b$",
-        color="red",
-        linestyle="--",
-    )
-    ax3.plot(
-        cosmo.ell,
-        derClOmegabTE(cosmo.ell),
-        label=r"$\partial C_\ell^{TE}/\partial \Omega_b$",
-        color="red",
-        linestyle=":",
-    )
+    # ax3.plot(
+    #     cosmo.ell,
+    #     derClOmegabTT(cosmo.ell),
+    #     label=r"$\partial C_\ell^{TT}/\partial \Omega_b$",
+    #     color="red",
+    # )
+    # ax3.plot(
+    #     cosmo.ell,
+    #     derClthetastarEE(cosmo.ell),
+    #     label=r"$\partial C_\ell^{EE}/\partial \Omega_b$",
+    #     color="red",
+    #     linestyle="--",
+    # )
+    # ax3.plot(
+    #     cosmo.ell,
+    #     derClOmegabTE(cosmo.ell),
+    #     label=r"$\partial C_\ell^{TE}/\partial \Omega_b$",
+    #     color="red",
+    #     linestyle=":",
+    # )
 
-    ax4.plot(
-        cosmo.ell,
-        derClOmegacdmTT(cosmo.ell),
-        label=r"$\partial C_\ell^{TT}/\partial \Omega_{\mathrm{cdm}}$",
-        color="red",
-    )
-    ax4.plot(
-        cosmo.ell,
-        derClOmegacdmEE(cosmo.ell),
-        label=r"$\partial C_\ell^{EE}/\partial \Omega_{\mathrm{cdm}}$",
-        color="red",
-        linestyle="--",
-    )
-    ax4.plot(
-        cosmo.ell,
-        derClOmegacdmTE(cosmo.ell),
-        label=r"$\partial C_\ell^{TE}/\partial \Omega_{\mathrm{cdm}}$",
-        color="red",
-        linestyle=":",
-    )
+    # ax4.plot(
+    #     cosmo.ell,
+    #     derClOmegacdmTT(cosmo.ell),
+    #     label=r"$\partial C_\ell^{TT}/\partial \Omega_{\mathrm{cdm}}$",
+    #     color="red",
+    # )
+    # ax4.plot(
+    #     cosmo.ell,
+    #     derClnsEE(cosmo.ell),
+    #     label=r"$\partial C_\ell^{EE}/\partial \Omega_{\mathrm{cdm}}$",
+    #     color="red",
+    #     linestyle="--",
+    # )
+    # ax4.plot(
+    #     cosmo.ell,
+    #     derClOmegacdmTE(cosmo.ell),
+    #     label=r"$\partial C_\ell^{TE}/\partial \Omega_{\mathrm{cdm}}$",
+    #     color="red",
+    #     linestyle=":",
+    # )
+
+    # plt.show()
+    # exit()
 
     # ax5.plot(cosmo.ell, derClAsTT(cosmo.ell), label=r"$\partial C_\ell^{TT}/\partial \ln A_s10^{10}$", color='red')
     # ax5.plot(cosmo.ell, derClAsEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial \ln A_s10^{10}$", color='red', linestyle='--')
@@ -186,12 +202,21 @@ if __name__ == "__main__":
     # ax6.set_title('ns')
 
     # plt.show()
-    fracstepthetastar = 0.005
-    fracstepomegab = 0.005
-    fracstepomegacdm = 0.005
-    fracstepAs = 0.005
-    fracstepns = 0.0001
-    fracsteptau = 0.005
+    # fracstepthetastar = 0.005
+    # fracstepomegab = 0.01
+    # fracstepomegacdm = 0.01
+    # fracstepAs = 0.005
+    # fracstepns = 0.005
+    # fracsteptau = 0.005
+    # fracstepmnu = 0.005
+
+    fracstepthetastar = 0.00001  # good
+    fracstepomegab = 0.04
+    fracstepomegacdm = 0.04
+    fracstepAs = 0.0002  # good
+    fracstepns = 0.0001  # good
+    fracsteptau = 0.002  # good
+    fracstepmnu = 0.04  # good
 
     cosmo2 = CosmoResults(
         pardict,
@@ -201,93 +226,244 @@ if __name__ == "__main__":
         fracstepAs=fracstepAs,
         fracstepns=fracstepns,
         fracsteptau=fracsteptau,
+        fracstepmnu=fracstepmnu,
     )
 
     derivatives2 = Set_Bait(
         cosmo2,
         geff_fixed=pardict.as_bool("geff_fixed"),
+        neutrino_mass_fixed=pardict.as_bool("neutrino_mass_fixed"),
         fracstepthetastar=fracstepthetastar,
         fracstepomegab=fracstepomegab,
         fracstepomegacdm=fracstepomegacdm,
         fracstepAs=fracstepAs,
         fracstepns=fracstepns,
         fracsteptau=fracsteptau,
+        fracstepmnu=fracstepmnu,
     )
 
-    derClthetastarTT2, derClthetastarEE2, derClthetastarTE2 = derivatives2[0]
-    derClATT2, derClAEE2, derClATE2 = derivatives2[1]
-    derClOmegabTT2, derClOmegabEE2, derClOmegabTE2 = derivatives2[2]
-    derClOmegacdmTT2, derClOmegacdmEE2, derClOmegacdmTE2 = derivatives2[3]
-    derClAsTT2, derClAsEE2, derClAsTE2 = derivatives2[4]
-    derClnsTT2, derClnsEE2, derClnsTE2 = derivatives2[5]
-    derCltauTT2, derCltauEE2, derCltauTE2 = derivatives2[6]
+    derClthetastarTT2, derClthetastarEE2, derClthetastarTE2, derClthetastarBB2 = (
+        derivatives2[1]
+    )
+    derClATT2, derClAEE2, derClATE2, derClABB2 = derivatives2[0]
+    derClOmegabTT2, derClOmegabEE2, derClOmegabTE2, derCLOmegabBB2 = derivatives2[2]
+    derClOmegacdmTT2, derClOmegacdmEE2, derClOmegacdmTE2, derClOmegacdmBB2 = (
+        derivatives2[3]
+    )
+    derClAsTT2, derClAsEE2, derClAsTE2, derClAsBB2 = derivatives2[4]
+    derClnsTT2, derClnsEE2, derClnsTE2, derClnsBB2 = derivatives2[5]
+    derCltauTT2, derCltauEE2, derCltauTE2, derCltauBB2 = derivatives2[6]
+    derClmnuTT2, derClmnuEE2, derClmnuTE2, derClmnuBB2 = derivatives2[7]
 
-    # ax1.plot(cosmo.ell, derClthetastarTT2(cosmo2.ell)/derClthetastarTT(cosmo.ell), label=r"$\partial C_\ell^{TT}/\partial 100\theta_*$", color='blue')
-    # ax1.plot(cosmo.ell, derClthetastarEE2(cosmo2.ell)/derClthetastarEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial 100\theta_*$",  color='blue', linestyle='--')
-    # ax1.plot(cosmo.ell, derClthetastarTE2(cosmo2.ell)/derClthetastarTE(cosmo.ell), label=r"$\partial C_\ell^{TE}/\partial 100\theta_*$", color='blue', linestyle=':')
+    ax1.plot(
+        cosmo.ell,
+        derClthetastarTT2 / derClthetastarTT,
+        label=r"$\partial C_\ell^{TT}/\partial 100\theta_*$",
+        color="blue",
+    )
+    ax1.plot(
+        cosmo.ell,
+        derClthetastarEE2 / derClthetastarEE,
+        label=r"$\partial C_\ell^{EE}/\partial 100\theta_*$",
+        color="blue",
+        linestyle="--",
+    )
+    ax1.plot(
+        cosmo.ell,
+        derClthetastarTE2 / derClthetastarTE,
+        label=r"$\partial C_\ell^{TE}/\partial 100\theta_*$",
+        color="blue",
+        linestyle=":",
+    )
+    ax2.plot(
+        cosmo.ell,
+        derClthetastarBB2 / derClthetastarBB,
+        label=r"$\partial C_\ell^{TT}/\partial \tau$",
+        color="blue",
+        linestyle="-.",
+    )
 
-    # ax2.plot(cosmo.ell, derCltauTT2(cosmo.ell)/derCltauTT(cosmo.ell), label=r"$\partial C_\ell^{TT}/\partial A$", color='blue')
-    # ax2.plot(cosmo.ell, derCltauEE2(cosmo.ell)/derCltauEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial A$", color='blue', linestyle='--')
-    # ax2.plot(cosmo.ell, derCltauTE2(cosmo.ell)/derCltauTE(cosmo.ell), label=r"$\partial C_\ell^{TE}/\partial A$", color='blue', linestyle=':')
-
-    # ax3.plot(cosmo.ell, derClOmegabTT2(cosmo.ell)//derClOmegabTT(cosmo.ell), label=r"$\partial C_\ell^{TT}/\partial \Omega_b$", color='blue')
-    # ax3.plot(cosmo.ell, derClOmegabEE2(cosmo.ell)/derClOmegabEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial \Omega_b$", color='blue', linestyle='--')
-    # ax3.plot(cosmo.ell, derClOmegabTE2(cosmo.ell)/derClOmegabTE(cosmo.ell), label=r"$\partial C_\ell^{TE}/\partial \Omega_b$", color='blue', linestyle=':')
-
-    # ax4.plot(cosmo.ell, derClOmegacdmTT2(cosmo.ell)/derClOmegacdmTT(cosmo.ell), label=r"$\partial C_\ell^{TT}/\partial \Omega_{\mathrm{cdm}}$", color='blue')
-    # ax4.plot(cosmo.ell, derClOmegacdmEE2(cosmo.ell)/derClOmegacdmEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial \Omega_{\mathrm{cdm}}$", color='blue', linestyle='--')
-    # ax4.plot(cosmo.ell, derClOmegacdmTE2(cosmo.ell)/derClOmegacdmTE(cosmo.ell), label=r"$\partial C_\ell^{TE}/\partial \Omega_{\mathrm{cdm}}$", color='blue', linestyle=':')
+    ax2.plot(
+        cosmo.ell,
+        derCltauTT2 / derCltauTT,
+        label=r"$\partial C_\ell^{TT}/\partial A$",
+        color="blue",
+    )
+    ax2.plot(
+        cosmo.ell,
+        derCltauEE2 / derCltauEE,
+        label=r"$\partial C_\ell^{EE}/\partial A$",
+        color="blue",
+        linestyle="--",
+    )
+    ax2.plot(
+        cosmo.ell,
+        derCltauTE2 / derCltauTE,
+        label=r"$\partial C_\ell^{TE}/\partial A$",
+        color="blue",
+        linestyle=":",
+    )
+    ax2.plot(
+        cosmo.ell,
+        derCltauBB2 / derCltauBB,
+        label=r"$\partial C_\ell^{BB}/\partial A$",
+        color="blue",
+        linestyle="-.",
+    )
 
     ax3.plot(
         cosmo.ell,
-        derClOmegabTT2(cosmo.ell),
+        derClOmegabTT2 / derClOmegabTT,
         label=r"$\partial C_\ell^{TT}/\partial \Omega_b$",
         color="blue",
     )
     ax3.plot(
         cosmo.ell,
-        derClOmegabEE2(cosmo.ell),
+        derClOmegabEE2 / derClOmegabEE,
         label=r"$\partial C_\ell^{EE}/\partial \Omega_b$",
         color="blue",
         linestyle="--",
     )
     ax3.plot(
         cosmo.ell,
-        derClOmegabTE2(cosmo.ell),
+        derClOmegabTE2 / derClOmegabTE,
         label=r"$\partial C_\ell^{TE}/\partial \Omega_b$",
         color="blue",
         linestyle=":",
     )
+    ax3.plot(
+        cosmo.ell,
+        derCLOmegabBB2 / derCLOmegabBB,
+        label=r"$\partial C_\ell^{BB}/\partial \Omega_b$",
+        color="blue",
+        linestyle="-.",
+    )
 
     ax4.plot(
         cosmo.ell,
-        derClOmegacdmTT2(cosmo.ell),
+        derClmnuTT2 / derClmnuTT,
         label=r"$\partial C_\ell^{TT}/\partial \Omega_{\mathrm{cdm}}$",
         color="blue",
     )
     ax4.plot(
         cosmo.ell,
-        derClOmegacdmEE2(cosmo.ell),
+        derClmnuEE2 / derClmnuEE,
         label=r"$\partial C_\ell^{EE}/\partial \Omega_{\mathrm{cdm}}$",
         color="blue",
         linestyle="--",
     )
     ax4.plot(
         cosmo.ell,
-        derClOmegacdmTE2(cosmo.ell),
+        derClmnuTE2 / derClmnuTE,
         label=r"$\partial C_\ell^{TE}/\partial \Omega_{\mathrm{cdm}}$",
         color="blue",
         linestyle=":",
     )
+    ax4.plot(
+        cosmo.ell,
+        derClmnuBB2 / derClmnuBB,
+        label=r"$\partial C_\ell^{BB}/\partial \Omega_{\mathrm{cdm}}$",
+        color="blue",
+        linestyle="-.",
+    )
 
-    # ax5.plot(cosmo.ell, derClAsTT2(cosmo.ell)/derClAsTT(cosmo.ell), label=r"$\partial C_\ell^{TT}/\partial \ln A_s10^{10}$", color='blue')
-    # ax5.plot(cosmo.ell, derClAsEE2(cosmo.ell)/derClAsEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial \ln A_s10^{10}$", color='blue', linestyle='--')
-    # ax5.plot(cosmo.ell, derClAsTE2(cosmo.ell)/derClAsTE(cosmo.ell), label=r"$\partial C_\ell^{TE}/\partial \ln A_s10^{10}$", color='blue', linestyle=':')
+    # ax3.plot(
+    #     cosmo.ell,
+    #     derClOmegabTT2(cosmo.ell),
+    #     label=r"$\partial C_\ell^{TT}/\partial \Omega_b$",
+    #     color="blue",
+    # )
+    # ax3.plot(
+    #     cosmo.ell,
+    #     derClOmegabEE2(cosmo.ell),
+    #     label=r"$\partial C_\ell^{EE}/\partial \Omega_b$",
+    #     color="blue",
+    #     linestyle="--",
+    # )
+    # ax3.plot(
+    #     cosmo.ell,
+    #     derClOmegabTE2(cosmo.ell),
+    #     label=r"$\partial C_\ell^{TE}/\partial \Omega_b$",
+    #     color="blue",
+    #     linestyle=":",
+    # )
 
-    # ax6.plot(cosmo.ell, derClnsTT2(cosmo.ell)/derClnsTT(cosmo.ell), label=r"$\partial C_\ell^{TT}/\partial n_s$", color='blue')
-    # ax6.plot(cosmo.ell, derClnsEE2(cosmo.ell)/derClnsEE(cosmo.ell), label=r"$\partial C_\ell^{EE}/\partial n_s$", color='blue', linestyle='--')
-    # ax6.plot(cosmo.ell, derClnsTE2(cosmo.ell)/derClnsTE(cosmo.ell), label=r"$\partial C_\ell^{TE}/\partial n_s$", color='blue', linestyle=':')
+    # ax4.plot(
+    #     cosmo.ell,
+    #     derClOmegacdmTT2(cosmo.ell),
+    #     label=r"$\partial C_\ell^{TT}/\partial \Omega_{\mathrm{cdm}}$",
+    #     color="blue",
+    # )
+    # ax4.plot(
+    #     cosmo.ell,
+    #     derClOmegacdmEE2(cosmo.ell),
+    #     label=r"$\partial C_\ell^{EE}/\partial \Omega_{\mathrm{cdm}}$",
+    #     color="blue",
+    #     linestyle="--",
+    # )
+    # ax4.plot(
+    #     cosmo.ell,
+    #     derClOmegacdmTE2(cosmo.ell),
+    #     label=r"$\partial C_\ell^{TE}/\partial \Omega_{\mathrm{cdm}}$",
+    #     color="blue",
+    #     linestyle=":",
+    # )
 
+    ax5.plot(
+        cosmo.ell,
+        derClAsTT2 / derClAsTT,
+        label=r"$\partial C_\ell^{TT}/\partial \ln A_s10^{10}$",
+        color="blue",
+    )
+    ax5.plot(
+        cosmo.ell,
+        derClAsEE2 / derClAsEE,
+        label=r"$\partial C_\ell^{EE}/\partial \ln A_s10^{10}$",
+        color="blue",
+        linestyle="--",
+    )
+    ax5.plot(
+        cosmo.ell,
+        derClAsTE2 / derClAsTE,
+        label=r"$\partial C_\ell^{TE}/\partial \ln A_s10^{10}$",
+        color="blue",
+        linestyle=":",
+    )
+    ax5.plot(
+        cosmo.ell,
+        derClAsBB2 / derClAsBB,
+        label=r"$\partial C_\ell^{BB}/\partial \ln A_s10^{10}$",
+        color="blue",
+        linestyle="-.",
+    )
+
+    ax6.plot(
+        cosmo.ell,
+        derClnsTT2 / derClnsTT,
+        label=r"$\partial C_\ell^{TT}/\partial n_s$",
+        color="blue",
+    )
+    ax6.plot(
+        cosmo.ell,
+        derClnsEE2 / derClnsEE,
+        label=r"$\partial C_\ell^{EE}/\partial n_s$",
+        color="blue",
+        linestyle="--",
+    )
+    ax6.plot(
+        cosmo.ell,
+        derClnsTE2 / derClnsTE,
+        label=r"$\partial C_\ell^{TE}/\partial n_s$",
+        color="blue",
+        linestyle=":",
+    )
+    ax6.plot(
+        cosmo.ell,
+        derClnsBB2 / derClnsBB,
+        label=r"$\partial C_\ell^{BB}/\partial n_s$",
+        color="blue",
+        linestyle="-.",
+    )
     plt.show()
 
     # fracstepthetastar = 0.0005
