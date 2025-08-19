@@ -35,12 +35,12 @@ if __name__ == "__main__":
     # fracsteptau = 0.01  # good
     # fracstepmnu = 0.045  # good
 
-    fracstepthetastar = 0.00002  # good
-    fracstepomegab = 0.05
-    fracstepomegacdm = 0.05
+    fracstepthetastar = 0.01  # good
+    fracstepomegab = 0.06
+    fracstepomegacdm = 0.06
     fracstepAs = 0.01  # good
-    fracstepns = 0.0002  # good
-    fracsteptau = 0.001  # good
+    fracstepns = 0.01  # good
+    fracsteptau = 0.02  # good
     fracstepmnu = 0.05  # good
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
@@ -157,13 +157,20 @@ if __name__ == "__main__":
     # add prior on tau
     # Catch[-1][-1] += 1.0 / (0.01**2)
 
-    Catch[0, :] *= 100.0  # 10000 theta_star -> 100 theta_star
-    Catch[:, 0] *= 100.0  # 10000 theta_star -> 100 theta_star
-    Catch[3, :] *= 100.0  # 100 Omegacdm -> Omegacdm
-    Catch[:, 3] *= 100.0  # 100 Omegacdm -> Omegacdm
+    # Catch[0, :] *= 100.0  # 10000 theta_star -> 100 theta_star
+    # Catch[:, 0] *= 100.0  # 10000 theta_star -> 100 theta_star
+    # Catch[3, :] *= 100.0  # 100 Omegacdm -> Omegacdm
+    # Catch[:, 3] *= 100.0  # 100 Omegacdm -> Omegacdm
+
+    ##Catch[1, :] /= 100.0  # 10000 theta_star -> 100 theta_star
+    # Catch[:, 1] /= 100.0  # 10000 theta_star -> 100 theta_star
+
+    # if not pardict.as_bool("geff_fixed"):
+    # Catch[-1, :] /= 100.0  # 10000 log10Geff -> 100 log10Geff
+    # Catch[:, -1] /= 100.0  # 10000 log10Ge
 
     # cov = np.linalg.inv(Catch)
-    # console.log('matrix condition number: ', np.linalg.cond(Catch))
+    console.log("matrix condition number: ", np.linalg.cond(Catch))
 
     # console.log('matrix condition number without A_phi: ', np.linalg.cond(Catch2))
 
@@ -173,7 +180,7 @@ if __name__ == "__main__":
 
     # import matplotlib.pyplot as plt
     # plt.imshow(np.log10(np.abs(Catch)), cmap="viridis")
-    # plt.colorbar(
+    # plt.colorbar()
     # plt.show()
 
     # Catch = np.delete(Catch, 1, axis=0)  # remove A_phi
@@ -204,13 +211,21 @@ if __name__ == "__main__":
 
     covCatch2 = np.linalg.inv(Catch2)
 
-    # covCatch2[0, :] /= 100.0
-    # covCatch2[:, 0] /= 100.0  # A_phi
-    # covCatch2[2, :] /= 100.0
-    # covCatch2[:, 2] /= 100.0  # Omegab
+    # Catch3 = copy.deepcopy(Catch)
+    # Catch3 = Catch3[[0,1,5],:][:, [0,1,5]]  # remove A_phi and log10Geff
+    # #Catch3 = Catch3[[0,1],:][:, [0,1]]  # remove A_phi and log10Geff
+
+    # covCatch3 = np.linalg.inv(Catch3)
+    # covCatch2[1, :] /= 100.0
+    # covCatch2[:, 1] /= 100.0  # A_phi
+    # covCatch2[-1, :] /= 100.0
+    # covCatch2[:, -1] /= 100.0  # Omegab
 
     errs2 = np.sqrt(np.diag(covCatch2))
     print(errs2)
+
+    # errs3 = np.sqrt(np.diag(covCatch3))
+    # print(errs3)
 
     cov = np.linalg.inv(Catch)
 
