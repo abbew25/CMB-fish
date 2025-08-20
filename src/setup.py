@@ -48,6 +48,7 @@ class CosmoResults:
         self.use_EE = True if pardict["use_EE"] == "True" else False
         self.use_BB = True if pardict["use_BB"] == "True" else False
         self.noise_Planck = True if pardict["noise_Planck"] == "True" else False
+        self.noise_Planck2 = True if pardict["noise_Planck2"] == "True" else False
 
         # for derivatives w.r.t. thetastar
         self.clTTEETE_variations_thetastar = []
@@ -57,13 +58,17 @@ class CosmoResults:
         self.clTTEETE_variations_ns = []
         self.clTTEETE_variations_tau = []
         self.clTTEETE_variations_mnu = []
+
+        pardict["thetastar"] = self.theta_star / 100.0
+        if "h" in pardict.keys():
+            del pardict["h"]
+
+        # print(self.theta_star)
         for i in [-3.0, -2.0, -1.0, 1.0, 2.0, 3.0]:
             pardictcopy = copy.deepcopy(pardict)
             pardictcopy["thetastar"] = (
                 self.theta_star * (1.0 + i * fracstepthetastar) / 100.0
             )
-            if "h" in pardictcopy.keys():
-                del pardictcopy["h"]
 
             # var = self.run_camb(pardictcopy)
             var = self.run_class_CMB(pardictcopy)
@@ -197,7 +202,7 @@ class CosmoResults:
 
         CMBdat = results.get_cmb_power_spectra(
             pars, CMB_unit="muK", lmax=5000, raw_cl=True
-        )["unlensed_total"]
+        )["total"]
 
         clTT = np.array(CMBdat[:, 0][2:])
         clEE = np.array(CMBdat[:, 1][2:])
@@ -266,8 +271,8 @@ class CosmoResults:
             mnu,
         )
 
-    def run_class_CMB(self, pardict: ConfigObj):
-        parlinear = copy.deepcopy(pardict)
+    def run_class_CMB(self, pardictin: ConfigObj):
+        parlinear = copy.deepcopy(pardictin)
         if "A_s" not in parlinear.keys():
             if "ln10^{10}A_s" in parlinear.keys():
                 parlinear["A_s"] = np.exp(float(parlinear["ln10^{10}A_s"])) / 1.0e10
@@ -296,20 +301,53 @@ class CosmoResults:
 
         M = Class()
 
-        M.set(
-            {
-                "omega_b": float(parlinear["omega_b"]),
-                "omega_cdm": float(parlinear["omega_cdm"]),
-                "theta_s_100": float(parlinear["thetastar"]) * 100.0,
-                "A_s": float(parlinear["A_s"]),
-                "N_ur": float(parlinear["Neff"])
-                - 1.0132,  # This is the effective number of relativistic species
-                "N_ncdm": 1,  # Number of massive neutrino species
-                "m_ncdm": float(parlinear["Sum_mnu"]),
-                "tau_reio": float(parlinear["tau_reio"]),
-                "n_s": float(parlinear["n_s"]),
-            }
-        )
+        # M.set(
+        #     {
+        #         "omega_b": float(parlinear["omega_b"]),
+        #         "omega_cdm": float(parlinear["omega_cdm"]),
+        #         "theta_s_100": float(parlinear["thetastar"]) * 100.0,
+        #         "A_s": float(parlinear["A_s"]),
+        #         "N_ur": float(parlinear["Neff"])
+        #         - 1.0132,  # This is the effective number of relativistic species
+        #         "N_ncdm": 1,  # Number of massive neutrino species
+        #         "m_ncdm": float(parlinear["Sum_mnu"]),
+        #         "tau_reio": float(parlinear["tau_reio"]),
+        #         "n_s": float(parlinear["n_s"]),
+        #     }
+        # )
+
+        if parlinear["thetastar"] is not None:
+            # print(parlinear['thetastar'])
+            M.set(
+                {
+                    "omega_b": float(parlinear["omega_b"]),
+                    "omega_cdm": float(parlinear["omega_cdm"]),
+                    "theta_s_100": float(parlinear["thetastar"]) * 100.0,
+                    "A_s": float(parlinear["A_s"]),
+                    "N_ur": float(parlinear["Neff"])
+                    - 1.0132,  # This is the effective number of relativistic species
+                    "N_ncdm": 1,  # Number of massive neutrino species
+                    "m_ncdm": float(parlinear["Sum_mnu"]),
+                    "tau_reio": float(parlinear["tau_reio"]),
+                    "n_s": float(parlinear["n_s"]),
+                }
+            )
+
+        else:
+            M.set(
+                {
+                    "omega_b": float(parlinear["omega_b"]),
+                    "omega_cdm": float(parlinear["omega_cdm"]),
+                    "h": float(parlinear["h"]),
+                    "A_s": float(parlinear["A_s"]),
+                    "N_ur": float(parlinear["Neff"])
+                    - 1.0132,  # This is the effective number of relativistic species
+                    "N_ncdm": 1,  # Number of massive neutrino species
+                    "m_ncdm": float(parlinear["Sum_mnu"]),
+                    "tau_reio": float(parlinear["tau_reio"]),
+                    "n_s": float(parlinear["n_s"]),
+                }
+            )
 
         M.set({"output": "tCl,lCl,pCl", "l_max_scalars": 5000, "lensing": "yes"})
 
@@ -326,7 +364,7 @@ class CosmoResults:
         clTE = cls["te"][2:] * T_cmb**2 * 1.0e12  # Convert to microK^2
         clBB = cls["bb"][2:] * T_cmb**2 * 1.0e12  # Convert to microK^2
 
-        area = float(pardict["skyarea"]) * (np.pi / 180.0) ** 2
+        area = float(pardictin["skyarea"]) * (np.pi / 180.0) ** 2
         # print(results.bbn_predictions())
         Omegab = float(parlinear["omega_b"])
         Omegacdm = float(parlinear["omega_cdm"])
@@ -334,13 +372,15 @@ class CosmoResults:
         ns = float(parlinear["n_s"])
         tau = float(parlinear["tau_reio"])
         mnu = float(parlinear["Sum_mnu"]) if "Sum_mnu" in parlinear.keys() else 0.0
-        theta_star = (
-            parlinear["thetastar"] * 100.0 if "thetastar" in parlinear.keys() else None
-        )
-
+        theta_star = M.get_current_derived_parameters(["100*theta_s"])[
+            "100*theta_s"
+        ]  # parlinear["thetastar"]*100.0 if "thetastar" in parlinear.keys() else None
+        # print(theta_star)
         A_phi = float(parlinear["A_phi"]) if "A_phi" in parlinear.keys() else 0.0
         log10Geff = (
-            pardict.as_float("log10Geff") if "log10Geff" in pardict.keys() else -np.inf
+            pardictin.as_float("log10Geff")
+            if "log10Geff" in pardictin.keys()
+            else -np.inf
         )
 
         alphanu = 8.0 / 7.0 * (11.0 / 4.0) ** (4.0 / 3.0)
