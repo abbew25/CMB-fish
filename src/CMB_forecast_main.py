@@ -27,21 +27,21 @@ if __name__ == "__main__":
         console.log("Please set one of these parameters to True.")
         sys.exit(1)
 
-    # fracstepthetastar = 0.015  # good
-    # fracstepomegab = 0.045
-    # fracstepomegacdm = 0.045
-    # fracstepAs = 0.01  # good
-    # fracstepns = 0.001  # good
-    # fracsteptau = 0.01  # good
-    # fracstepmnu = 0.045  # good
+    fracstepthetastar = 0.015  # good
+    fracstepomegab = 0.03
+    fracstepomegacdm = 0.03
+    fracstepAs = 0.02  # good
+    fracstepns = 0.001  # good
+    fracsteptau = 0.001  # good
+    fracstepmnu = 0.02  # good
 
-    fracstepthetastar = 0.01  # good
-    fracstepomegab = 0.06
-    fracstepomegacdm = 0.06
-    fracstepAs = 0.01  # good
-    fracstepns = 0.01  # good
-    fracsteptau = 0.02  # good
-    fracstepmnu = 0.05  # good
+    # fracstepthetastar = 0.02  # good
+    # fracstepomegab = 0.03
+    # fracstepomegacdm = 0.03
+    # fracstepAs = 0.05  # good
+    # fracstepns = 0.01  # good
+    # fracsteptau = 0.03  # good
+    # fracstepmnu = 0.02  # good
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -222,7 +222,8 @@ if __name__ == "__main__":
     # covCatch2[:, -1] /= 100.0  # Omegab
 
     errs2 = np.sqrt(np.diag(covCatch2))
-    print(errs2)
+    # print(errs2)
+    console.log("Errors without Neff:", errs2)
 
     # errs3 = np.sqrt(np.diag(covCatch3))
     # print(errs3)
@@ -231,7 +232,8 @@ if __name__ == "__main__":
 
     errs = np.sqrt(np.diag(cov))
 
-    print(errs)
+    # print(errs)
+    console.log("Errors with Neff:", errs)
 
     means = np.array(
         [
@@ -279,7 +281,7 @@ if __name__ == "__main__":
             means[6],
             errs[6] / means[6] * 100.0,
             means[7],
-            errs[7] / means[7] * 100.0,
+            errs[7] / abs(means[7]) * 100.0,
         )
     else:
         txt = "{:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.5f}    {:.5f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}    {:.3f}".format(
