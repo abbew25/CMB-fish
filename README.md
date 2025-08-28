@@ -25,7 +25,7 @@ The user can also specify whether to include Geff or Mnu as free parameters here
 
 The parameter $$A_{\phi}$$ should be set to zero for the standard model neutrino phase shift (corresponding to $$N_{\mathrm{eff}} = 3.044$$. For standard model neutrinos, set $$log10Geff = -12$$. 
 
-If the user sets ```geff_fixed = False``` (thus including it as a parameter in the forecasts), one may find that for very small values of $$\log_{10}{(G_{\mathrm{eff})} \leq -3$$, this will result in a singular fisher matrix. There is little to no information on $$\log_{10}{(G_{\mathrm{eff})} \leq -3$$ from the phase shift alone for small values which is why this occurrs. 
+If the user sets ```geff_fixed = False``` (thus including it as a parameter in the forecasts), one may find that for very small values of $$\log_{10}{(G_{\mathrm{eff}})} \leq -3$$, this will result in a singular fisher matrix. There is little to no information on $$\log_{10}{(G_{\mathrm{eff}})} \leq -3$$ from the phase shift alone for small values which is why this occurrs. 
 
 The config file also specifies the prefix for output files (the covariance matrix) to be saved for the user to access later. 
 
