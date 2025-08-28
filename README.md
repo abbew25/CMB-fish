@@ -23,16 +23,16 @@ The config file allows the user to specify the cosmology and also set limits on 
 
 The user can also specify whether to include Geff or Mnu as free parameters here (```geff_fixed = False```, ```neutrino_mass_fixed = True```). 
 
-The parameter $$A_{\phi}$$ should be set to zero for the standard model neutrino phase shift (corresponding to $$N_{\mathrm{eff}} = 3.044$$. For standard model neutrinos, set $$\log_{10}{(Geff_{\mathrm{eff}})} = -12$$. 
+The parameter $$A_{\phi}$$ should be set to zero for the standard model neutrino phase shift (corresponding to $$N_{\mathrm{eff}} = 3.044$$. For standard model neutrinos, set $$\log_{10}{(G_{\mathrm{eff}})} = -12$$. 
 
 If the user sets ```geff_fixed = False``` (thus including it as a parameter in the forecasts), one may find that for very small values of $$\log_{10}{(G_{\mathrm{eff}})} \leq -3$$, this will result in a singular fisher matrix. There is little to no information on $$\log_{10}{(G_{\mathrm{eff}})} \leq -3$$ from the phase shift alone for small values which is why this occurrs. 
 
 The config file also specifies the prefix for output files (the covariance matrix) to be saved for the user to access later. 
 
-In the source file, if the user sets ```noise_Planck = False``` the forecasts will reflect those of a CV limited survey. If you want to include/not include CMB lensing, edit the output for the $$ C_{\ell} $$ s in the functions ```self.run_class_CMB(pardict)```/ ```self.run_CAMB(pardict)``` in the ```CosmoResults``` object within the setup.py file in src/. At present, I haven't set up the code to be able to read in a file that specifies the noise of the CMB experiment. However, if one sets ```Plank_noise = True``` in the config file, it will assume the noise properties specified in Font-Ribera et al 2014 for Planck specific forecasts for the TT, EE and TE power spectra. 
+In the source file, if the user sets ```noise_Planck = False``` the forecasts will reflect those of a CV limited survey. If you want to include/not include CMB lensing, edit the output for the $$ C_{l} $$ s in the functions ```self.run_class_CMB(pardict)```/ ```self.run_CAMB(pardict)``` in the ```CosmoResults``` object within the setup.py file in src/. At present, I haven't set up the code to be able to read in a file that specifies the noise of the CMB experiment. However, if one sets ```Plank_noise = True``` in the config file, it will assume the noise properties specified in Font-Ribera et al 2014 for Planck specific forecasts for the TT, EE and TE power spectra. 
 
 ## Other important info.
 
-In the main source file, ```CMB_forecast_main.py```, the step sizes for numerical derivatives of the $$ C_{\ell} $$ s w.r.t. cosmological parameters are specified. The forecasts are very sensitive to these step sizes and can become unstable for step sizes that are not robust.
+In the main source file, ```CMB_forecast_main.py```, the step sizes for numerical derivatives of the $$ C_{l} $$ s w.r.t. cosmological parameters are specified. The forecasts are very sensitive to these step sizes and can become unstable for step sizes that are not robust.
 
 
