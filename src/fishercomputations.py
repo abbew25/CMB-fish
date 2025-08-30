@@ -164,10 +164,12 @@ def compute_deriv(
 
         derivs.append(dfdx)  # derCl_thetastar[4]))
 
-    return derivs[0], derivs[1], derivs[2], derivs[3]
+    from scipy.ndimage import gaussian_filter1d as gf
+
+    return gf(derivs[0], 2), gf(derivs[1], 2), gf(derivs[2], 2), gf(derivs[3], 2)
 
 
-def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.2):
+def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.01):
     order = 3
     ClarrayTT = np.zeros((2 * order + 1, len(cosmo.ell)))
     ClarrayEE = np.zeros((2 * order + 1, len(cosmo.ell)))
@@ -217,7 +219,7 @@ def compute_deriv_phiamplitude(cosmo: CosmoResults, dl: float = 0.2):
     derClTE = np.sum(ClarrayTE, axis=0) / dl
     derClBB = np.zeros(derClTE.shape)  # Assuming BB is not used in this function
 
-    dl_dA = 1.0 * fitting_formula_Montefalcone2025(cosmo.ell)
+    dl_dA = -1.0 * fitting_formula_Montefalcone2025(cosmo.ell)
 
     derClTT_A = derClTT * dl_dA
     derClEE_A = derClEE * dl_dA
@@ -442,6 +444,7 @@ def CastNet(
             np.array([Cl_arr[j][i] for j in range(len(Cl_arr))]),
             lval,
             noise_Planck=cosmo.noise_Planck,
+            use_noise_Planck2=cosmo.noise_Planck2,
         )
 
         # frac = 0.8 if lval < 30.0 else 0.44 # cosmo.area / (4.0 * np.pi)  # Area in steradians
@@ -477,7 +480,12 @@ def CastNet(
     return Shoal
 
 
-def compute_cov(cosmoClval: npt.NDArray, lval: float, noise_Planck: bool = True):
+def compute_cov(
+    cosmoClval: npt.NDArray,
+    lval: float,
+    noise_Planck: bool = True,
+    use_noise_Planck2: bool = False,
+):
     """Computes the covariance matrix of the auto and cross-power spectra for a given
         ell, as well as its inverse.
 
@@ -495,10 +503,12 @@ def compute_cov(cosmoClval: npt.NDArray, lval: float, noise_Planck: bool = True)
     deltaE = np.array([6.7e-6, 4.0e-6, 9.8e-6]) * deltabE * 1.0e6 * T_cmb
     deltaB = np.array([6.7e-6, 4.0e-6, 9.8e-6]) * deltabB * 1.0e6 * T_cmb
 
-    # deltabE = np.array([14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
-    # deltabT = np.array([33.0, 23.0, 14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
-    # deltaT = np.array([145.0, 149.0, 137.0, 65.0, 43.0, 66.0, 200.0]) / 3437.75
-    # deltaE = np.array([450.0, 103.0, 81.0, 134.0, 406.0]) / 3437.75
+    if use_noise_Planck2:
+        deltabE = np.array([14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
+        deltabT = np.array([33.0, 23.0, 14.0, 10.0, 7.0, 5.0, 5.0]) / 3437.75
+        deltaT = np.array([145.0, 149.0, 137.0, 65.0, 43.0, 66.0, 200.0]) / 3437.75
+        deltaE = np.array([450.0, 103.0, 81.0, 134.0, 406.0]) / 3437.75
+
     Nl_freqT = (
         1.0
         / (deltaT**2)
