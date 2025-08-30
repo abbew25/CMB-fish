@@ -27,21 +27,13 @@ if __name__ == "__main__":
         console.log("Please set one of these parameters to True.")
         sys.exit(1)
 
-    fracstepthetastar = 0.015  # good
-    fracstepomegab = 0.03
-    fracstepomegacdm = 0.03
-    fracstepAs = 0.02  # good
-    fracstepns = 0.001  # good
-    fracsteptau = 0.001  # good
-    fracstepmnu = 0.02  # good
-
-    # fracstepthetastar = 0.02  # good
-    # fracstepomegab = 0.03
-    # fracstepomegacdm = 0.03
-    # fracstepAs = 0.05  # good
-    # fracstepns = 0.01  # good
-    # fracsteptau = 0.03  # good
-    # fracstepmnu = 0.02  # good
+    fracstepthetastar = 0.0025 / 3.0  # good
+    fracstepomegab = 0.0275 / 3.0
+    fracstepomegacdm = 0.02 / 3.0
+    fracstepAs = 0.01 / 3.0  # good
+    fracstepns = 0.001 / 3.0  # good
+    fracsteptau = 0.05 / 3.0  # good
+    fracstepmnu = 0.02 / 3.0  # good
 
     # Set up the linear power spectrum and derived parameters based on the input cosmology
     cosmo = CosmoResults(
@@ -157,8 +149,8 @@ if __name__ == "__main__":
     # add prior on tau
     # Catch[-1][-1] += 1.0 / (0.01**2)
 
-    # Catch[0, :] *= 100.0  # 10000 theta_star -> 100 theta_star
-    # Catch[:, 0] *= 100.0  # 10000 theta_star -> 100 theta_star
+    # Catch[0, :] /= 10.0
+    # Catch[:, 0] /= 10.0
     # Catch[3, :] *= 100.0  # 100 Omegacdm -> Omegacdm
     # Catch[:, 3] *= 100.0  # 100 Omegacdm -> Omegacdm
 
@@ -171,6 +163,7 @@ if __name__ == "__main__":
 
     # cov = np.linalg.inv(Catch)
     console.log("matrix condition number: ", np.linalg.cond(Catch))
+    console.log("matrix eigenvalues: ", np.linalg.eigvals(Catch))
 
     # console.log('matrix condition number without A_phi: ', np.linalg.cond(Catch2))
 
@@ -211,6 +204,9 @@ if __name__ == "__main__":
 
     covCatch2 = np.linalg.inv(Catch2)
 
+    # covCatch2[:,0] /= 100.0
+    # covCatch2[0,:] /= 100.0
+
     # Catch3 = copy.deepcopy(Catch)
     # Catch3 = Catch3[[0,1,5],:][:, [0,1,5]]  # remove A_phi and log10Geff
     # #Catch3 = Catch3[[0,1],:][:, [0,1]]  # remove A_phi and log10Geff
@@ -229,6 +225,9 @@ if __name__ == "__main__":
     # print(errs3)
 
     cov = np.linalg.inv(Catch)
+
+    # cov[:,0] /= 100.0
+    # cov[0,:] /= 100.0
 
     errs = np.sqrt(np.diag(cov))
 
@@ -308,6 +307,7 @@ if __name__ == "__main__":
     write_fisher(
         pardict,
         cov,
+        Catch,
         means,
     )
 
