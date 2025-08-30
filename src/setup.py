@@ -187,7 +187,7 @@ class CosmoResults:
             neutrino_hierarchy=parlinear["nu_hierarchy"],
             thetastar=parlinear["thetastar"],
             nnu=float(parlinear["Neff"]),
-            # YHe=0.2478,
+            YHe=0.245,
             # TCMB=2.7255,
         )
         pars.NonLinear = camb.model.NonLinear_none
@@ -330,6 +330,7 @@ class CosmoResults:
                     "m_ncdm": float(parlinear["Sum_mnu"]),
                     "tau_reio": float(parlinear["tau_reio"]),
                     "n_s": float(parlinear["n_s"]),
+                    "YHe": 0.245,
                 }
             )
 
@@ -346,6 +347,7 @@ class CosmoResults:
                     "m_ncdm": float(parlinear["Sum_mnu"]),
                     "tau_reio": float(parlinear["tau_reio"]),
                     "n_s": float(parlinear["n_s"]),
+                    "YHe": 0.245,
                 }
             )
 
@@ -387,14 +389,14 @@ class CosmoResults:
         eps = A_phi * (1.0 / (1.0 + alphanu) - 3.044 / (3.044 + alphanu)) + 3.044 / (
             3.044 + alphanu
         )
+        eps1 = 1.0 / (1.0 + alphanu)
+        eps3044 = 3.044 / (3.044 + alphanu)
         beta = eps / (3.044 / (3.044 + alphanu))
-        factor = beta / (1.0 / (1.0 + alphanu) - 3.044 / (3.044 + alphanu))
+        factor = -1.0 * eps3044 / (eps1 - eps3044)
 
-        ellshift = factor * fitting_formula_interactingneutrinos(
+        ellshift = factor * beta * fitting_formula_interactingneutrinos(
             ll, log10Geff, theta_star
         ) - factor * fitting_formula_Montefalcone2025(ll)
-
-        # ellshift = (A_phi) * fitting_formula_Montefalcone2025(ll)
 
         from scipy.interpolate import CubicSpline
 
@@ -424,6 +426,7 @@ class CosmoResults:
 def write_fisher(
     pardict: ConfigObj,
     cov_inv: npt.NDArray,
+    fisher: npt.NDArray,
     parameter_means: list,
 ) -> None:
     """
@@ -433,9 +436,11 @@ def write_fisher(
 
     cov_filename = pardict["outputfile"] + "_cov.txt"
     data_filename = pardict["outputfile"] + "_dat.txt"
+    fisher_filename = pardict["outputfile"] + "_fisher.txt"
 
     np.savetxt(cov_filename, cov_inv)
     np.savetxt(data_filename, parameter_means)
+    np.savetxt(fisher_filename, fisher)
 
 
 def fitting_formula_Montefalcone2025(ll: npt.NDArray) -> npt.NDArray:
@@ -564,8 +569,9 @@ def derivell_geff(ellarr: npt.NDArray, log10Geff: float, thetas: float, A: float
         3.044 + alphanu
     )
     beta = eps / (3.044 / (3.044 + alphanu))
-    denom = 1.0 / (1.0 + alphanu) - 3.044 / (3.044 + alphanu)
-    factor = beta / denom
+    factor = 1.0 / (1.0 + alphanu) - 3.044 / (3.044 + alphanu)
+    factor = -1.0 * 3.044 / (3.044 + alphanu) / factor
+    factor = beta * factor
 
     firstterm = (
         deriv_amplitude_modulation_geff(ellarr, log10Geff, thetas)
@@ -696,7 +702,7 @@ class CosmoResults_quick:
             neutrino_hierarchy=parlinear["nu_hierarchy"],
             thetastar=parlinear["thetastar"],
             nnu=float(parlinear["Neff"]),
-            # YHe=0.2478,
+            YHe=0.245,
             # TCMB=2.7255,
         )
         pars.NonLinear = camb.model.NonLinear_none
@@ -743,10 +749,12 @@ class CosmoResults_quick:
         eps = A_phi * (1.0 / (1.0 + alphanu) - 3.044 / (3.044 + alphanu)) + 3.044 / (
             3.044 + alphanu
         )
+        eps1 = 1.0 / (1.0 + alphanu)
+        eps3044 = 3.044 / (3.044 + alphanu)
         beta = eps / (3.044 / (3.044 + alphanu))
-        factor = -1.0 * beta / (1.0 / (1.0 + alphanu) - 3.044 / (3.044 + alphanu))
+        factor = -1.0 * eps3044 / (eps1 - eps3044)
 
-        ellshift = factor * fitting_formula_interactingneutrinos(
+        ellshift = factor * beta * fitting_formula_interactingneutrinos(
             ll, log10Geff, theta_star
         ) - factor * fitting_formula_Montefalcone2025(ll)
 
@@ -823,6 +831,7 @@ class CosmoResults_quick:
                     "m_ncdm": float(parlinear["Sum_mnu"]),
                     "tau_reio": float(parlinear["tau_reio"]),
                     "n_s": float(parlinear["n_s"]),
+                    "YHe": 0.245,
                 }
             )
 
@@ -839,6 +848,7 @@ class CosmoResults_quick:
                     "m_ncdm": float(parlinear["Sum_mnu"]),
                     "tau_reio": float(parlinear["tau_reio"]),
                     "n_s": float(parlinear["n_s"]),
+                    "YHe": 0.245,
                 }
             )
 
@@ -897,6 +907,9 @@ class CosmoResults_quick:
         from scipy.interpolate import CubicSpline
         # clTT_compare = CubicSpline(ll - factor * fitting_formula_interactingneutrinos(ll, log10Geff, theta_star), clTT)(ll)
         # import matplotlib.pyplot as plt
+        # plt.plot(ll, factor* fitting_formula_interactingneutrinos(ll, log10Geff, theta_star))
+        # plt.plot(ll, factor * fitting_formula_Montefalcone2025(ll), label="Montefalcone 2025")
+        # plt.show()
         # plt.plot(ll, clTT, label="no shift")
 
         clTT = CubicSpline(ll - ellshift, clTT)(ll)
